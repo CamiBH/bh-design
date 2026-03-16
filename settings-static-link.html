@@ -1,0 +1,497 @@
+<!--
+  BrightHire — AI Interviewer Settings: Static Link Section
+  Design tokens used:
+    - surface-page-default: #ffffff
+    - surface-info-subtle: rgba(7,114,208,0.08)
+    - surface-alert-subtle: #fff8db
+    - surface-action-default: #0772d0
+    - surface-action-hover: #2398fb
+    - surface-action-secondary: #060e14
+    - text-default-heading: #060e14
+    - text-default-body: #393f47
+    - text-default-subtle: #67717e
+    - text-default-disabled: #b8bec5
+    - text-action-default: #0772d0
+    - text-alert-default: #b38100
+    - border-default-default: #e5e7ea
+    - border-action-focus: #2398fb
+    - icon-default-body: #67717e
+    - icon-alert-default: #b38100
+    - Font: Inter
+    - Body MD: 14px/20px
+    - Body SM: 12px/16px
+    - H5: 24px/28px Semi Bold
+    - H6: 20px/24px Semi Bold
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Interviewer Settings — Static Link</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: #f5f6f7; color: #393f47; }
+
+  /* ===== LAYOUT ===== */
+  .page { display: flex; min-height: 100vh; }
+
+  /* --- Sidebar Nav --- */
+  .sidebar {
+    width: 56px; background: linear-gradient(180deg, #060e14 0%, #1a2330 100%);
+    display: flex; flex-direction: column; align-items: center; padding: 16px 0; gap: 20px;
+    position: fixed; top: 0; left: 0; height: 100vh; z-index: 10;
+  }
+  .sidebar .logo { width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(100.3deg, rgb(0,116,221) 2.93%, rgb(89,30,255) 58.85%, rgb(150,68,255) 126.18%); display: flex; align-items: center; justify-content: center; }
+  .sidebar .logo svg { width: 18px; height: 18px; }
+  .sidebar .nav-icon { width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s; }
+  .sidebar .nav-icon:hover { background: rgba(255,255,255,0.1); }
+  .sidebar .nav-icon.active { background: rgba(255,255,255,0.15); }
+  .sidebar .nav-icon svg { width: 20px; height: 20px; color: #9ca5ae; }
+  .sidebar .nav-icon.active svg { color: #ffffff; }
+
+  /* --- Main content --- */
+  .main { margin-left: 56px; flex: 1; }
+
+  /* --- Top bar --- */
+  .top-bar {
+    height: 64px; background: #ffffff; border-bottom: 1px solid #e5e7ea;
+    display: flex; align-items: center; padding: 0 32px; gap: 40px;
+  }
+  .top-bar-meta { display: flex; gap: 40px; align-items: center; flex: 1; }
+  .top-bar-meta .meta-item { display: flex; flex-direction: column; gap: 2px; }
+  .top-bar-meta .meta-label { font-size: 11px; line-height: 16px; font-weight: 400; color: #9ca5ae; text-transform: uppercase; letter-spacing: 0.5px; }
+  .top-bar-meta .meta-value { font-size: 14px; line-height: 20px; font-weight: 500; color: #060e14; }
+  .top-bar-meta .meta-value.status-active { color: #0772d0; }
+  .top-bar-actions { display: flex; gap: 8px; align-items: center; }
+
+  /* --- Buttons --- */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    font-family: 'Inter', sans-serif; font-weight: 500; cursor: pointer;
+    border: none; transition: all 0.15s;
+  }
+  .btn-md { height: 32px; padding: 0 12px; border-radius: 6px; font-size: 14px; line-height: 20px; }
+  .btn-sm { height: 24px; padding: 0 8px; border-radius: 4px; font-size: 11.67px; line-height: 16px; }
+  .btn-lg { height: 40px; padding: 0 16px; border-radius: 8px; font-size: 14px; line-height: 20px; }
+  .btn-primary { background: #0772d0; color: #fff; border: 1px solid #0772d0; }
+  .btn-primary:hover { background: #2398fb; border-color: #2398fb; }
+  .btn-secondary { background: transparent; color: #060e14; border: 1px solid #060e14; }
+  .btn-secondary:hover { background: #f5f6f7; }
+  .btn-tertiary { background: transparent; color: #0772d0; border: 1px solid transparent; }
+  .btn-tertiary:hover { color: #2398fb; }
+  .btn-icon { width: 32px; height: 32px; padding: 0; border-radius: 6px; background: transparent; border: 1px solid #e5e7ea; color: #67717e; }
+  .btn-icon:hover { background: #f5f6f7; border-color: #d3d8de; }
+  .btn-icon svg { width: 20px; height: 20px; }
+
+  /* --- Tabs --- */
+  .tabs {
+    display: flex; gap: 0; border-bottom: 1px solid #e5e7ea; background: #fff;
+    padding: 0 32px;
+  }
+  .tab {
+    padding: 14px 16px; font-size: 14px; line-height: 20px; font-weight: 500;
+    color: #67717e; cursor: pointer; border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .tab:hover { color: #393f47; }
+  .tab.active { color: #0772d0; border-bottom-color: #0772d0; }
+
+  /* --- Content area --- */
+  .content-area {
+    display: flex; gap: 0; padding: 32px;
+  }
+
+  /* --- Left stepper --- */
+  .stepper {
+    width: 180px; flex-shrink: 0; padding-right: 16px;
+  }
+  .step-item { display: flex; gap: 12px; align-items: flex-start; padding: 8px 0; }
+  .step-number {
+    width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; flex-shrink: 0;
+  }
+  .step-number.completed { background: #259b71; color: #fff; }
+  .step-number.active { background: #0772d0; color: #fff; }
+  .step-number.upcoming { background: #e5e7ea; color: #67717e; }
+  .step-label { font-size: 14px; line-height: 20px; font-weight: 500; color: #393f47; padding-top: 2px; }
+  .step-label.active { color: #0772d0; }
+  .step-desc { font-size: 12px; line-height: 16px; color: #9ca5ae; margin-top: 2px; }
+
+  /* --- Settings panel + Manual invites panel --- */
+  .panels { display: flex; gap: 16px; flex: 1; }
+  .panel {
+    background: #ffffff; border: 1px solid #e5e7ea; border-radius: 12px;
+    padding: 24px; flex: 1;
+  }
+  .panel-title { font-size: 20px; line-height: 24px; font-weight: 600; color: #060e14; margin-bottom: 24px; }
+
+  /* --- Form fields --- */
+  .form-group { margin-bottom: 20px; }
+  .form-label { font-size: 14px; line-height: 20px; font-weight: 500; color: #060e14; margin-bottom: 6px; display: block; }
+  .form-hint { font-size: 12px; line-height: 16px; color: #9ca5ae; margin-top: 4px; }
+  .form-input {
+    width: 100%; height: 36px; border: 1px solid #d3d8de; border-radius: 6px;
+    padding: 0 12px; font-size: 14px; line-height: 20px; font-family: 'Inter', sans-serif;
+    color: #393f47; background: #fff; transition: border-color 0.15s;
+  }
+  .form-input:focus { outline: none; border-color: #2398fb; box-shadow: 0 0 0 2px rgba(35,152,251,0.15); }
+  .form-input::placeholder { color: #b8bec5; }
+  .form-select {
+    width: 100%; height: 36px; border: 1px solid #d3d8de; border-radius: 6px;
+    padding: 0 12px; font-size: 14px; line-height: 20px; font-family: 'Inter', sans-serif;
+    color: #393f47; background: #fff; appearance: none; cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2367717e' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center;
+  }
+
+  /* --- Toggle switch --- */
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .toggle-label { font-size: 14px; line-height: 20px; font-weight: 500; color: #060e14; }
+  .toggle {
+    width: 44px; height: 24px; border-radius: 12px; background: #d3d8de;
+    position: relative; cursor: pointer; transition: background 0.2s;
+  }
+  .toggle.on { background: #0772d0; }
+  .toggle .toggle-knob {
+    width: 20px; height: 20px; border-radius: 50%; background: #fff;
+    position: absolute; top: 2px; left: 2px; transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+  .toggle.on .toggle-knob { transform: translateX(20px); }
+
+  /* --- Warning / info banners --- */
+  .banner {
+    display: flex; gap: 12px; padding: 12px 16px; border-radius: 8px;
+    font-size: 14px; line-height: 20px;
+  }
+  .banner-warning { background: #fff8db; }
+  .banner-warning .banner-icon { color: #b38100; flex-shrink: 0; margin-top: 1px; }
+  .banner-warning .banner-text { color: #393f47; }
+  .banner-info { background: rgba(7,114,208,0.08); }
+  .banner-info .banner-icon { color: #0772d0; flex-shrink: 0; margin-top: 1px; }
+  .banner-info .banner-text { color: #393f47; }
+
+  /* --- Link display --- */
+  .link-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .link-label { font-size: 14px; line-height: 20px; font-weight: 500; color: #67717e; width: 52px; flex-shrink: 0; }
+  .link-url {
+    flex: 1; height: 36px; border: 1px solid #d3d8de; border-radius: 6px;
+    padding: 0 12px; font-size: 13px; line-height: 36px; color: #393f47;
+    background: #f5f6f7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .link-actions { display: flex; gap: 4px; }
+
+  .regen-hint { font-size: 12px; line-height: 16px; color: #9ca5ae; font-style: italic; margin-top: -4px; margin-bottom: 16px; }
+
+  /* --- Divider --- */
+  .divider { height: 1px; background: #e5e7ea; margin: 24px 0; }
+
+  /* --- New section: Static link card --- */
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .section-title { font-size: 16px; line-height: 24px; font-weight: 600; color: #060e14; }
+  .badge-new {
+    display: inline-flex; align-items: center; height: 20px; padding: 0 8px;
+    border-radius: 1600px; background: #edebfc; color: #4d37de;
+    font-size: 11.67px; line-height: 16px; font-weight: 600;
+  }
+
+  /* --- ATS config section --- */
+  .ats-config { background: #f5f6f7; border-radius: 8px; padding: 16px; margin-top: 16px; }
+  .ats-config-title { font-size: 14px; line-height: 20px; font-weight: 600; color: #060e14; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .ats-badge { display: inline-flex; align-items: center; gap: 4px; height: 20px; padding: 0 8px; border-radius: 4px; background: #effaf6; color: #259b71; font-size: 11.67px; font-weight: 500; }
+  .ats-config .form-group { margin-bottom: 12px; }
+  .ats-config .form-group:last-child { margin-bottom: 0; }
+
+  /* --- QR code section --- */
+  .qr-section { display: flex; align-items: flex-start; gap: 16px; margin-top: 16px; padding: 16px; background: #f5f6f7; border-radius: 8px; }
+  .qr-placeholder { width: 80px; height: 80px; border-radius: 8px; background: #fff; border: 1px solid #e5e7ea; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .qr-placeholder svg { color: #9ca5ae; }
+  .qr-info { flex: 1; }
+  .qr-info p { font-size: 14px; line-height: 20px; color: #393f47; margin-bottom: 8px; }
+
+  /* --- Annotation labels --- */
+  .annotation {
+    position: absolute; display: flex; align-items: center; gap: 6px;
+    font-size: 11px; line-height: 16px; font-weight: 600; color: #ca1e1b;
+    white-space: nowrap;
+  }
+  .annotation::before {
+    content: ''; width: 8px; height: 8px; border-radius: 50%; background: #ca1e1b; flex-shrink: 0;
+  }
+
+  /* Screen label */
+  .screen-label {
+    text-align: center; padding: 16px 0 8px; font-size: 12px; line-height: 16px;
+    font-weight: 600; color: #9ca5ae; text-transform: uppercase; letter-spacing: 1px;
+  }
+</style>
+</head>
+<body>
+
+<div class="screen-label">AI Interviewer — Settings / Options tab (with new static link section)</div>
+
+<div class="page">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="#fff"/></svg>
+    </div>
+    <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg></div>
+    <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+    <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg></div>
+    <div class="nav-icon active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg></div>
+    <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/></svg></div>
+  </nav>
+
+  <!-- Main -->
+  <div class="main">
+    <!-- Top bar -->
+    <div class="top-bar">
+      <div style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#67717e" stroke-width="1.5"><path d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        <span style="font-size:14px;font-weight:500;color:#67717e;">All Int.</span>
+      </div>
+      <span style="font-size:16px;font-weight:600;color:#060e14;">AI interviewer</span>
+      <div class="top-bar-meta">
+        <div class="meta-item">
+          <span class="meta-label">AI interviewer name</span>
+          <span class="meta-value">Sr Ent CSM Screen</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Job title</span>
+          <span class="meta-value">Senior Enterprise Customer Success Manager</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Status</span>
+          <span class="meta-value status-active">Draft – Saved</span>
+        </div>
+      </div>
+      <div class="top-bar-actions">
+        <span style="font-size:12px;color:#259b71;font-weight:500;">SAVED</span>
+        <button class="btn btn-md btn-secondary">Exit</button>
+        <button class="btn btn-md btn-primary">Continue</button>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <div class="tab">Candidates</div>
+      <div class="tab">Guide</div>
+      <div class="tab active">Options</div>
+      <div class="tab">Invites</div>
+      <div class="tab">Test interviews</div>
+    </div>
+
+    <!-- Content -->
+    <div class="content-area">
+      <!-- Stepper -->
+      <div class="stepper">
+        <div class="step-item">
+          <div class="step-number completed">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <div><div class="step-label">Setup</div></div>
+        </div>
+        <div class="step-item">
+          <div class="step-number completed">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <div><div class="step-label">Guide</div></div>
+        </div>
+        <div class="step-item">
+          <div class="step-number active">3</div>
+          <div>
+            <div class="step-label active">Customization</div>
+            <div class="step-desc">Options</div>
+            <div class="step-desc" style="margin-top:4px;">Add company info for candidate questions, set interview intro/ outro scripts, and choose interviewer settings.</div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-number upcoming">4</div>
+          <div><div class="step-label">Done</div></div>
+        </div>
+      </div>
+
+      <!-- Panels -->
+      <div class="panels">
+        <!-- Left: Settings panel (abbreviated) -->
+        <div class="panel" style="max-width: 400px;">
+          <div class="panel-title">Settings</div>
+          <div class="form-group">
+            <label class="form-label">AI interviewer name</label>
+            <input type="text" class="form-input" value="Qualification Screen - CS">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Job title (Will be shown to candidates)</label>
+            <input type="text" class="form-input" value="Enterprise Customer Success Manager">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Capture media</label>
+            <select class="form-select"><option>Video + Audio</option></select>
+          </div>
+          <div class="form-group">
+            <div class="toggle-row">
+              <span class="form-label" style="margin-bottom:0;">Require video</span>
+              <div class="toggle"><div class="toggle-knob"></div></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="toggle-row">
+              <span class="form-label" style="margin-bottom:0;">Allow retakes</span>
+              <div class="toggle"><div class="toggle-knob"></div></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Scorecard template</label>
+            <select class="form-select"><option>Select...</option></select>
+          </div>
+          <div style="margin-top:24px;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;line-height:16px;color:#9ca5ae;margin-bottom:4px;"><span>Date created</span><span style="color:#393f47;">May 13, 2025</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;line-height:16px;color:#9ca5ae;margin-bottom:4px;"><span>Last updated by</span><span style="color:#393f47;">Lionel Scaloni</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;line-height:16px;color:#9ca5ae;margin-bottom:4px;"><span>Last updated</span><span style="color:#393f47;">May 15, 2025</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;line-height:16px;color:#9ca5ae;"><span>Author</span><span style="color:#393f47;">Lionel Scaloni</span></div>
+          </div>
+        </div>
+
+        <!-- Right: Manual invites + NEW Static link -->
+        <div style="flex:1;display:flex;flex-direction:column;gap:16px;">
+
+          <!-- Existing: Manual invites (as-is from reference) -->
+          <div class="panel">
+            <div class="panel-title">Manual invites</div>
+            <div class="toggle-row">
+              <span class="toggle-label">Enable invite link</span>
+              <div class="toggle on"><div class="toggle-knob"></div></div>
+            </div>
+            <div style="font-size:14px;line-height:20px;color:#67717e;margin-bottom:16px;">These links grant interview access to anyone who has the URL.</div>
+            <div class="banner banner-warning" style="margin-bottom:16px;">
+              <div class="banner-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#b38100" stroke-width="1.5"/><path d="M12 8v4m0 4h.01" stroke="#b38100" stroke-width="1.5" stroke-linecap="round"/></svg>
+              </div>
+              <div class="banner-text">Hiring teams should distribute links only to the intended candidates to prevent unauthorized access, misuse, and unexpected interview-related costs.</div>
+            </div>
+            <div style="font-size:14px;line-height:20px;font-weight:500;color:#060e14;margin-bottom:12px;">Manage invite link</div>
+            <div class="link-row">
+              <span class="link-label">Online:</span>
+              <div class="link-url">https://app.brighthire.ai/ai-interviewer/58432496-26f2-400a-91c9-939dd19e332c</div>
+              <div class="link-actions">
+                <button class="btn-icon" title="Copy link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101"/><path d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg></button>
+                <button class="btn-icon" title="Regenerate link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4v5h5M20 20v-5h-5"/><path d="M20.49 9A9 9 0 005.64 5.64L4 7m16 10l-1.64 1.36A9 9 0 013.51 15"/></svg></button>
+              </div>
+            </div>
+            <div class="regen-hint">Regenerating the link will cause any previous links to expire.</div>
+            <div class="link-row">
+              <span class="link-label">Phone:</span>
+              <div class="link-url" style="background:#fff;">US +1 917 235 2346</div>
+              <div class="link-actions">
+                <button class="btn-icon" title="Copy number"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101"/><path d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg></button>
+                <button class="btn-icon" title="Regenerate number"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4v5h5M20 20v-5h-5"/><path d="M20.49 9A9 9 0 005.64 5.64L4 7m16 10l-1.64 1.36A9 9 0 013.51 15"/></svg></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============================================ -->
+          <!-- NEW: Shareable Static Link Section           -->
+          <!-- ============================================ -->
+          <div class="panel" style="border: 2px solid #4d37de;">
+            <div class="section-header">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="panel-title" style="margin-bottom:0;">Shareable static link</div>
+                <span class="badge-new">New</span>
+              </div>
+              <div class="toggle on"><div class="toggle-knob"></div></div>
+            </div>
+            <p style="font-size:14px;line-height:20px;color:#67717e;margin-bottom:16px;">Share a single link for career fairs, events, or job boards. Candidates who use this link will be synced to your ATS automatically.</p>
+
+            <!-- Warning banner -->
+            <div class="banner banner-info" style="margin-bottom:20px;">
+              <div class="banner-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#0772d0" stroke-width="1.5"/><path d="M12 16v-4m0-4h.01" stroke="#0772d0" stroke-width="1.5" stroke-linecap="round"/></svg>
+              </div>
+              <div class="banner-text">Candidates will enter their name and email before the interview begins. Their information will be synced to the selected job and stage in your ATS.</div>
+            </div>
+
+            <!-- ATS configuration -->
+            <div class="ats-config">
+              <div class="ats-config-title">
+                ATS mapping
+                <span class="ats-badge">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#259b71" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg>
+                  Greenhouse connected
+                </span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Job <span style="color:#ca1e1b;">*</span></label>
+                <select class="form-select">
+                  <option>Senior Enterprise Customer Success Manager</option>
+                </select>
+                <div class="form-hint">The ATS job this link maps to. Each link is tied to one specific job.</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Target stage <span style="color:#ca1e1b;">*</span></label>
+                <select class="form-select">
+                  <option>AI Screen</option>
+                </select>
+                <div class="form-hint">Candidates will be placed in this stage when they start the interview.</div>
+              </div>
+            </div>
+
+            <!-- Link display -->
+            <div style="margin-top:20px;">
+              <div style="font-size:14px;line-height:20px;font-weight:500;color:#060e14;margin-bottom:12px;">Static link</div>
+              <div class="link-row">
+                <span class="link-label">Online:</span>
+                <div class="link-url">https://app.brighthire.ai/screen/join/sr-ent-csm-screen-38f2a</div>
+                <div class="link-actions">
+                  <button class="btn-icon" title="Copy link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101"/><path d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg></button>
+                  <button class="btn-icon" title="Regenerate link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4v5h5M20 20v-5h-5"/><path d="M20.49 9A9 9 0 005.64 5.64L4 7m16 10l-1.64 1.36A9 9 0 013.51 15"/></svg></button>
+                </div>
+              </div>
+              <div class="regen-hint">Regenerating the link will cause any previous links to expire.</div>
+            </div>
+
+            <!-- QR Code section -->
+            <div class="qr-section">
+              <div class="qr-placeholder">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#9ca5ae" stroke-width="1"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/></svg>
+              </div>
+              <div class="qr-info">
+                <p style="font-weight:500;color:#060e14;">QR code</p>
+                <p>Download a QR code for this link to use at events, on printed materials, or in presentations.</p>
+                <button class="btn btn-sm btn-tertiary" style="padding-left:0;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                  Download QR code
+                </button>
+              </div>
+            </div>
+
+            <!-- Link status / stats -->
+            <div style="margin-top:20px;display:flex;gap:24px;">
+              <div>
+                <div style="font-size:12px;line-height:16px;color:#9ca5ae;">Link created</div>
+                <div style="font-size:14px;line-height:20px;color:#393f47;font-weight:500;">Mar 10, 2026</div>
+              </div>
+              <div>
+                <div style="font-size:12px;line-height:16px;color:#9ca5ae;">Interviews via this link</div>
+                <div style="font-size:14px;line-height:20px;color:#393f47;font-weight:500;">24</div>
+              </div>
+              <div>
+                <div style="font-size:12px;line-height:16px;color:#9ca5ae;">ATS sync status</div>
+                <div style="font-size:14px;line-height:20px;color:#259b71;font-weight:500;display:flex;align-items:center;gap:4px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#259b71" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg>
+                  All synced
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

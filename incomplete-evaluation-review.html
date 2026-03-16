@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BrightHire — Incomplete Interview Evaluation Review</title>
+<!--
+  BrightHire Design System Tokens Used:
+  Colors: surface-page (#fff), surface-alert-subtle (#fff8db), surface-error-subtle (#ffe5e6),
+    surface-success-subtle (#effaf6), surface-default-subtle (#f5f6f7), surface-ai-subtle (#edebfc),
+    text-heading (#060e14), text-body (#393f47), text-subtle (#67717e), text-disabled (#b8bec5),
+    text-alert (#b38100), text-error (#ca1e1b), text-action (#0772d0), text-success (#259b71),
+    text-ai (#6b46c1), border-default (#e5e7ea), surface-action (#0772d0)
+  Typography: Inter 400/500/600/700, Body MD 14/20, Body SM 12/16
+  Spacing: 4,8,12,16,20,24,32 · Radius: 4/6/8/12px
+
+  INTERACTIONS IMPLEMENTED:
+  1. Add manual score (inline score input w/ save/cancel)
+  2. Dismiss flag (removes flag, shows dismissed state)
+  3. Mark as N/A (grays out question, updates counters)
+  4. Adjust Overall Score (inline editor in score area)
+  5. Mark as Complete → confirmation modal w/ ATS push option
+  6. Show/Hide Evaluation Criteria (expand/collapse)
+  7. Scroll to flagged questions (smooth scroll from banner)
+  8. Banner auto-updates as flags are resolved
+  9. Toast notifications for actions
+  10. Success state after marking complete
+-->
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f5f6f7; color: #393f47; font-size: 14px; line-height: 20px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── LAYOUT ── */
+  .evaluation-panel { max-width: 620px; margin: 0 auto; background: #fff; min-height: 100vh; border-right: 1px solid #e5e7ea; position: relative; }
+
+  /* ── TAB BAR ── */
+  .tab-bar { display: flex; padding: 16px 24px 0; border-bottom: 1px solid #e5e7ea; background: #fff; position: sticky; top: 0; z-index: 20; }
+  .tab { padding: 8px 16px 12px; font-size: 14px; font-weight: 500; color: #67717e; cursor: pointer; border-bottom: 2px solid transparent; display: flex; align-items: center; gap: 6px; transition: color 0.15s; user-select: none; }
+  .tab:hover { color: #393f47; }
+  .tab.active { color: #6b46c1; border-bottom-color: #6b46c1; }
+  .tab .ai-icon { width: 16px; height: 16px; }
+  .panel-body { padding: 20px 24px 100px; }
+
+  /* ── META ── */
+  .eval-meta { font-size: 12px; line-height: 16px; color: #67717e; display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+  .eval-meta .sep { color: #d3d8de; }
+  .meta-warning { color: #b38100; font-weight: 500; transition: all 0.3s; }
+  .meta-success { color: #259b71; font-weight: 500; }
+
+  /* ── INCOMPLETE BANNER ── */
+  .incomplete-banner { background: #fff8db; border: 1px solid #e6d19a; border-radius: 8px; padding: 16px; margin-bottom: 20px; transition: all 0.4s ease; overflow: hidden; }
+  .incomplete-banner.resolved { background: #effaf6; border-color: #b8e6d4; }
+  .incomplete-banner.hiding { opacity: 0; max-height: 0; padding: 0 16px; margin-bottom: 0; border-width: 0; }
+  .banner-header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+  .banner-icon { flex-shrink: 0; width: 20px; height: 20px; color: #b38100; margin-top: 1px; }
+  .incomplete-banner.resolved .banner-icon { color: #259b71; }
+  .banner-title { font-size: 14px; font-weight: 600; line-height: 20px; color: #060e14; }
+  .banner-body { font-size: 14px; line-height: 20px; color: #505863; margin-left: 30px; }
+  .banner-reasons { margin-top: 8px; margin-left: 30px; display: flex; flex-direction: column; gap: 6px; }
+  .reason-item { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 18px; color: #505863; transition: all 0.3s; }
+  .reason-item.resolved-item { text-decoration: line-through; color: #b8bec5; }
+  .reason-bullet { flex-shrink: 0; width: 6px; height: 6px; border-radius: 50%; background: #b38100; margin-top: 6px; transition: background 0.3s; }
+  .reason-item.resolved-item .reason-bullet { background: #259b71; }
+  .banner-actions { margin-top: 12px; margin-left: 30px; display: flex; gap: 12px; align-items: center; }
+  .banner-link { font-size: 13px; font-weight: 500; color: #0772d0; text-decoration: none; cursor: pointer; }
+  .banner-link:hover { color: #2398fb; text-decoration: underline; }
+
+  /* ── SECTION LABEL ── */
+  .section-label { font-size: 11px; font-weight: 600; line-height: 16px; letter-spacing: 0.5px; text-transform: uppercase; color: #67717e; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .summary-text { font-size: 14px; line-height: 22px; color: #393f47; margin-bottom: 16px; }
+
+  /* ── OVERALL SCORE ── */
+  .score-row { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #e5e7ea; }
+  .overall-score { flex-shrink: 0; width: 56px; height: 56px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; transition: all 0.3s; cursor: default; }
+  .overall-score.partial { background: #fff8db; border: 2px solid #e6d19a; }
+  .overall-score.complete-score { background: #effaf6; border: 2px solid #b8e6d4; }
+  .overall-score.editing-score { background: #f0f7ff; border: 2px solid #2398fb; }
+  .overall-score .score-value { font-size: 24px; font-weight: 700; line-height: 28px; color: #060e14; }
+  .overall-score .score-label { font-size: 9px; font-weight: 500; line-height: 12px; color: #67717e; text-transform: uppercase; letter-spacing: 0.3px; }
+  .partial-badge { position: absolute; top: -6px; right: -6px; width: 16px; height: 16px; background: #b38100; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; transition: all 0.3s; }
+  .partial-badge.hidden { opacity: 0; transform: scale(0); }
+  .partial-badge svg { width: 8px; height: 8px; color: #fff; }
+  .score-details { flex: 1; }
+  .partial-note { font-size: 12px; line-height: 16px; color: #b38100; font-weight: 500; margin-bottom: 6px; display: flex; align-items: center; gap: 4px; transition: color 0.3s; }
+  .partial-note.resolved-note { color: #259b71; }
+  .score-bullets { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+  .score-bullets li { display: flex; align-items: flex-start; gap: 6px; font-size: 13px; line-height: 18px; color: #393f47; }
+  .score-bullets li .bullet-icon { flex-shrink: 0; width: 16px; height: 16px; margin-top: 1px; }
+  .bullet-check { color: #259b71; }
+  .bullet-x { color: #ca1e1b; }
+  .bullet-warning { color: #b38100; }
+
+  /* ── SCORE EDITOR (inline for overall score) ── */
+  .score-editor { margin-top: 10px; display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: #f5f6f7; border-radius: 6px; border: 1px solid #e5e7ea; animation: slideDown 0.2s ease; }
+  .score-editor-label { font-size: 12px; font-weight: 500; color: #67717e; white-space: nowrap; }
+  .score-input { width: 56px; height: 32px; border: 1px solid #d3d8de; border-radius: 4px; text-align: center; font-size: 16px; font-weight: 600; font-family: 'Inter', sans-serif; color: #060e14; background: #fff; outline: none; }
+  .score-input:focus { border-color: #2398fb; box-shadow: 0 0 0 2px rgba(35,152,251,0.15); }
+  .score-out-of { font-size: 12px; color: #9ca5ae; }
+
+  /* ── QUESTIONS ── */
+  .questions-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; margin-top: 4px; }
+  .question-card { padding: 16px 0; border-bottom: 1px solid #e5e7ea; transition: all 0.4s ease; }
+  .question-card:last-child { border-bottom: none; }
+  .question-top { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+  .q-score { flex-shrink: 0; width: 40px; height: 40px; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f5f6f7; border: 1px solid #e5e7ea; transition: all 0.3s; }
+  .q-score .q-score-value { font-size: 16px; font-weight: 700; line-height: 20px; color: #060e14; }
+  .q-score.incomplete { background: #fff8db; border-color: #e6d19a; }
+  .q-score.incomplete .q-score-icon { color: #b38100; }
+  .q-score.not-asked { background: #ffe5e6; border-color: #f5bfc0; }
+  .q-score.not-asked .q-score-icon { color: #ca1e1b; }
+  .q-score.na-score { background: #f5f6f7; border-color: #e5e7ea; }
+  .q-score.na-score .q-na-label { font-size: 11px; font-weight: 600; color: #9ca5ae; }
+  .q-score.manual-scored { background: #edebfc; border-color: #d5d0f5; }
+  .question-title { font-size: 14px; font-weight: 600; line-height: 20px; color: #060e14; flex: 1; }
+  .question-timestamp { flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 500; color: #0772d0; background: #f0f7ff; padding: 2px 8px; border-radius: 4px; cursor: pointer; text-decoration: none; }
+  .question-timestamp:hover { background: #dceefb; }
+  .question-body { margin-left: 52px; }
+  .eval-text { font-size: 14px; line-height: 22px; color: #393f47; margin-bottom: 12px; }
+  .strengths-label { font-size: 13px; font-weight: 600; line-height: 18px; color: #060e14; margin-bottom: 4px; }
+  .strengths-list { list-style: none; display: flex; flex-direction: column; gap: 2px; margin-bottom: 12px; }
+  .strengths-list li { font-size: 13px; line-height: 18px; color: #505863; padding-left: 14px; position: relative; }
+  .strengths-list li::before { content: "\2022"; position: absolute; left: 0; color: #9ca5ae; }
+  .q-weight { font-size: 10px; font-weight: 500; color: #9ca5ae; text-align: center; margin-top: 2px; }
+
+  /* ── SHOW CRITERIA ── */
+  .show-criteria { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: #0772d0; cursor: pointer; text-transform: uppercase; letter-spacing: 0.3px; padding: 0; background: none; border: none; }
+  .show-criteria:hover { color: #2398fb; }
+  .show-criteria svg { width: 14px; height: 14px; transition: transform 0.2s; }
+  .show-criteria.expanded svg { transform: rotate(90deg); }
+  .criteria-content { margin-top: 10px; padding: 12px; background: #f5f6f7; border-radius: 6px; border: 1px solid #e5e7ea; display: none; animation: slideDown 0.2s ease; }
+  .criteria-content.visible { display: block; }
+  .criteria-content p { font-size: 13px; line-height: 20px; color: #505863; margin-bottom: 8px; }
+  .criteria-content p:last-child { margin-bottom: 0; }
+  .criteria-item { display: flex; align-items: flex-start; gap: 6px; font-size: 13px; line-height: 18px; color: #505863; margin-bottom: 4px; }
+  .criteria-score { font-weight: 600; color: #060e14; min-width: 18px; }
+
+  /* ── FLAGGED SECTION ── */
+  .flagged-divider { margin: 24px -24px 0; padding: 0 24px; }
+  .flagged-label { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .flagged-label svg { color: #b38100; }
+  .flagged-label span { font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: #b38100; }
+  .question-card.is-incomplete { background: #fffdf5; margin: 0 -24px; padding: 16px 24px; border-left: 3px solid #e6d19a; }
+  .question-card.is-not-asked { background: #fff9f9; margin: 0 -24px; padding: 16px 24px; border-left: 3px solid #f5bfc0; }
+  .question-card.is-resolved { background: #fafbfc; margin: 0 -24px; padding: 16px 24px; border-left: 3px solid #d3d8de; opacity: 0.7; }
+  .question-card.is-na { background: #fafbfc; margin: 0 -24px; padding: 16px 24px; border-left: 3px solid #e5e7ea; }
+  .question-card.is-manually-scored { background: #faf9fe; margin: 0 -24px; padding: 16px 24px; border-left: 3px solid #d5d0f5; }
+  .incomplete-reason { margin-left: 52px; margin-bottom: 10px; }
+  .reason-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 4px; transition: all 0.3s; }
+  .reason-tag.warning { background: #fff8db; color: #b38100; border: 1px solid #e6d19a; }
+  .reason-tag.error { background: #ffe5e6; color: #ca1e1b; border: 1px solid #f5bfc0; }
+  .reason-tag.resolved-tag { background: #f5f6f7; color: #9ca5ae; border: 1px solid #e5e7ea; }
+  .reason-tag.na-tag { background: #f5f6f7; color: #9ca5ae; border: 1px solid #e5e7ea; }
+  .reason-tag.scored-tag { background: #edebfc; color: #6b46c1; border: 1px solid #d5d0f5; }
+  .reason-tag svg { width: 12px; height: 12px; }
+  .incomplete-note { margin-left: 52px; font-size: 13px; line-height: 20px; color: #67717e; font-style: italic; margin-bottom: 10px; }
+  .review-actions { margin-left: 52px; display: flex; align-items: center; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
+  .review-link { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 500; color: #0772d0; cursor: pointer; text-decoration: none; background: none; border: none; padding: 0; transition: color 0.15s; }
+  .review-link:hover { color: #2398fb; text-decoration: underline; }
+  .review-link svg { width: 14px; height: 14px; }
+  .action-sep { color: #d3d8de; user-select: none; }
+
+  /* ── AI SUGGESTION ── */
+  .ai-suggestion { margin-left: 52px; margin-top: 10px; padding: 10px 12px; background: #edebfc; border-radius: 6px; border: 1px solid #d5d0f5; display: flex; align-items: flex-start; gap: 8px; }
+  .ai-suggestion-icon { flex-shrink: 0; width: 16px; height: 16px; color: #6b46c1; margin-top: 2px; }
+  .ai-suggestion-text { font-size: 13px; line-height: 18px; color: #4d37de; }
+  .ai-suggestion-text strong { font-weight: 600; }
+
+  /* ── MANUAL SCORE INPUT (inline in flagged cards) ── */
+  .manual-score-form { margin-left: 52px; margin-top: 12px; padding: 12px; background: #f5f6f7; border-radius: 8px; border: 1px solid #e5e7ea; display: none; animation: slideDown 0.2s ease; }
+  .manual-score-form.visible { display: block; }
+  .msf-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .msf-label { font-size: 12px; font-weight: 500; color: #67717e; white-space: nowrap; }
+  .msf-input { width: 52px; height: 32px; border: 1px solid #d3d8de; border-radius: 4px; text-align: center; font-size: 14px; font-weight: 600; font-family: 'Inter', sans-serif; color: #060e14; background: #fff; outline: none; }
+  .msf-input:focus { border-color: #2398fb; box-shadow: 0 0 0 2px rgba(35,152,251,0.15); }
+  .msf-of { font-size: 12px; color: #9ca5ae; }
+  .msf-note-input { width: 100%; height: 60px; border: 1px solid #d3d8de; border-radius: 6px; padding: 8px 10px; font-size: 13px; font-family: 'Inter', sans-serif; color: #393f47; background: #fff; outline: none; resize: vertical; margin-bottom: 10px; }
+  .msf-note-input:focus { border-color: #2398fb; box-shadow: 0 0 0 2px rgba(35,152,251,0.15); }
+  .msf-note-input::placeholder { color: #b8bec5; }
+  .msf-actions { display: flex; gap: 8px; }
+
+  /* ── RESOLVED STATES ── */
+  .resolved-note { margin-left: 52px; font-size: 13px; line-height: 18px; color: #9ca5ae; margin-top: 4px; }
+  .resolved-note .editor-name { color: #67717e; font-weight: 500; }
+
+  /* ── ACTION BAR ── */
+  .action-bar { position: sticky; bottom: 0; background: #fff; border-top: 1px solid #e5e7ea; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px; z-index: 20; }
+  .action-bar-left { display: flex; align-items: center; gap: 8px; }
+  .action-bar-right { display: flex; align-items: center; gap: 8px; }
+
+  /* ── BUTTONS ── */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-family: 'Inter', sans-serif; font-weight: 500; cursor: pointer; transition: all 0.15s; white-space: nowrap; border: none; }
+  .btn-md { height: 32px; padding: 5.5px 12px; border-radius: 6px; font-size: 14px; line-height: 20px; }
+  .btn-sm { height: 24px; padding: 3px 8px; border-radius: 4px; font-size: 11.67px; line-height: 16px; }
+  .btn-primary { background: #0772d0; color: #fff; border: 1px solid #0772d0; }
+  .btn-primary:hover { background: #2398fb; border-color: #2398fb; }
+  .btn-secondary { background: transparent; color: #060e14; border: 1px solid #060e14; }
+  .btn-secondary:hover { background: #f5f6f7; }
+  .btn-tertiary { background: transparent; color: #0772d0; border: 1px solid transparent; }
+  .btn-tertiary:hover { background: #f0f7ff; }
+  .btn-success { background: #259b71; color: #fff; border: 1px solid #259b71; }
+  .btn-success:hover { background: #2db380; border-color: #2db380; }
+  .btn-ghost { background: transparent; color: #67717e; border: 1px solid transparent; }
+  .btn-ghost:hover { background: #f5f6f7; color: #505863; }
+  .btn:disabled { background: #d3d8de; color: #b8bec5; border-color: #d3d8de; cursor: not-allowed; }
+  .btn svg { width: 16px; height: 16px; }
+
+  /* ── MODAL OVERLAY ── */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(6,14,20,0.45); z-index: 100; display: none; align-items: center; justify-content: center; animation: fadeIn 0.15s ease; }
+  .modal-overlay.visible { display: flex; }
+  .modal { background: #fff; border-radius: 12px; width: 440px; max-width: 90vw; box-shadow: 0 24px 48px rgba(6,14,20,0.18), 0 4px 12px rgba(6,14,20,0.08); animation: modalIn 0.2s ease; padding: 24px; }
+  .modal-title { font-size: 18px; font-weight: 600; line-height: 24px; color: #060e14; margin-bottom: 8px; }
+  .modal-body { font-size: 14px; line-height: 22px; color: #505863; margin-bottom: 20px; }
+  .modal-checkbox { display: flex; align-items: flex-start; gap: 10px; padding: 12px; background: #f5f6f7; border-radius: 8px; margin-bottom: 20px; cursor: pointer; border: 1px solid #e5e7ea; transition: all 0.15s; }
+  .modal-checkbox:hover { border-color: #d3d8de; }
+  .modal-checkbox.checked { background: #f0f7ff; border-color: #0772d0; }
+  .checkbox-box { flex-shrink: 0; width: 18px; height: 18px; border: 2px solid #d3d8de; border-radius: 4px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; margin-top: 1px; }
+  .modal-checkbox.checked .checkbox-box { background: #0772d0; border-color: #0772d0; }
+  .checkbox-box svg { width: 12px; height: 12px; color: #fff; opacity: 0; transition: opacity 0.15s; }
+  .modal-checkbox.checked .checkbox-box svg { opacity: 1; }
+  .checkbox-label { font-size: 14px; line-height: 20px; color: #060e14; font-weight: 500; }
+  .checkbox-desc { font-size: 12px; line-height: 16px; color: #67717e; margin-top: 2px; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+  /* ── TOAST ── */
+  .toast-container { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 200; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+  .toast { padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px; box-shadow: 0 8px 24px rgba(6,14,20,0.15); animation: toastIn 0.25s ease; white-space: nowrap; }
+  .toast.success { background: #060e14; color: #fff; }
+  .toast.info { background: #060e14; color: #fff; }
+  .toast svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .toast.hiding { animation: toastOut 0.3s ease forwards; }
+
+  /* ── SUCCESS BAR (replaces action bar) ── */
+  .success-bar { position: sticky; bottom: 0; background: #effaf6; border-top: 1px solid #b8e6d4; padding: 16px 24px; display: none; align-items: center; gap: 12px; z-index: 20; }
+  .success-bar.visible { display: flex; }
+  .success-bar svg { width: 20px; height: 20px; color: #259b71; flex-shrink: 0; }
+  .success-bar-text { font-size: 14px; font-weight: 500; color: #259b71; flex: 1; }
+  .success-bar-sub { font-size: 12px; color: #67717e; font-weight: 400; }
+
+  /* ── COPY BUTTON ── */
+  .copy-btn { width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; color: #9ca5ae; cursor: pointer; border: none; background: none; border-radius: 4px; padding: 0; }
+  .copy-btn:hover { color: #505863; background: #f5f6f7; }
+
+  /* ── ANIMATIONS ── */
+  @keyframes slideDown { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+  @keyframes toastIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes toastOut { to { opacity: 0; transform: translateY(16px); } }
+  @keyframes checkPop { 0% { transform: scale(0); } 60% { transform: scale(1.2); } 100% { transform: scale(1); } }
+</style>
+</head>
+<body>
+
+<div class="evaluation-panel" id="panel">
+
+  <!-- ── TAB BAR ── -->
+  <div class="tab-bar">
+    <div class="tab active" id="tab-eval" onclick="switchTab('eval')">
+      <svg class="ai-icon" viewBox="0 0 16 16" fill="none"><path d="M8 1L9.5 5.5L14 4L10.5 8L14 12L9.5 10.5L8 15L6.5 10.5L2 12L5.5 8L2 4L6.5 5.5L8 1Z" fill="currentColor"/></svg>
+      Evaluation
+    </div>
+    <div class="tab" id="tab-transcript" onclick="switchTab('transcript')">Transcript</div>
+  </div>
+
+  <div class="panel-body" id="panel-body">
+
+    <!-- ── META ── -->
+    <div class="eval-meta">
+      9 questions <span class="sep">|</span> 41:24
+      <span class="sep">|</span>
+      <span id="eval-count" class="meta-warning">7 of 9 evaluated</span>
+    </div>
+
+    <!-- ═══ INCOMPLETE BANNER ═══ -->
+    <div class="incomplete-banner" id="banner">
+      <div class="banner-header">
+        <svg class="banner-icon" viewBox="0 0 20 20" fill="none"><path d="M10 2L18 17H2L10 2Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M10 8V11.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="14" r="0.75" fill="currentColor"/></svg>
+        <div>
+          <div class="banner-title" id="banner-title">Evaluation Incomplete</div>
+        </div>
+      </div>
+      <div class="banner-body" id="banner-body">
+        This evaluation is based on <span id="banner-count">7 of 9</span> guide questions. The following issues were detected:
+      </div>
+      <div class="banner-reasons">
+        <div class="reason-item" id="reason-not-asked">
+          <div class="reason-bullet"></div>
+          <span><strong>2 questions not asked</strong> — "Describe your approach to account renewals" and "How do you handle executive stakeholder conflicts" were not found in the interview.</span>
+        </div>
+        <div class="reason-item" id="reason-rephrased">
+          <div class="reason-bullet"></div>
+          <span><strong>1 question may have been rephrased</strong> — AI detected a similar topic discussed at 23:14 but couldn't confidently match it to the guide.</span>
+        </div>
+      </div>
+      <div class="banner-actions">
+        <a class="banner-link" href="#" onclick="scrollToFlagged(event)">Review flagged questions below ↓</a>
+      </div>
+    </div>
+
+    <!-- ═══ SUMMARY ═══ -->
+    <div class="section-label">SUMMARY <button class="copy-btn" title="Copy summary" onclick="copyText('summary-text')"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M5 2H13V12" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="4" width="8" height="10" rx="1" stroke="currentColor" stroke-width="1.5"/></svg></button></div>
+    <div class="summary-text" id="summary-text">
+      Seasoned customer success professional with nearly 8 years experience. Excels in account management and tool usage, but limited experience engaging with C-level stakeholders. <span style="color: #b38100; font-weight: 500;" id="summary-note">Note: 2 competency areas could not be fully evaluated.</span>
+    </div>
+
+    <!-- ── OVERALL SCORE ── -->
+    <div class="score-row">
+      <div class="overall-score partial" id="overall-score-box">
+        <div class="partial-badge" id="partial-badge">
+          <svg viewBox="0 0 8 8" fill="none"><path d="M4 1V4.5" stroke="white" stroke-width="1.2" stroke-linecap="round"/><circle cx="4" cy="6.25" r="0.5" fill="white"/></svg>
+        </div>
+        <div class="score-value" id="overall-score-value">82</div>
+        <div class="score-label" id="overall-score-label">Partial</div>
+      </div>
+      <div class="score-details">
+        <div class="partial-note" id="partial-note-text">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1.5L14.5 14H1.5L8 1.5Z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M8 6V9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="8" cy="11" r="0.6" fill="currentColor"/></svg>
+          <span id="partial-note-label">Based on 7 of 9 questions — review flagged items to finalize</span>
+        </div>
+        <ul class="score-bullets">
+          <li><svg class="bullet-icon bullet-check" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M5 8L7 10L11 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>8 years of enterprise customer success management.</li>
+          <li><svg class="bullet-icon bullet-check" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M5 8L7 10L11 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Able to renew $100K+ contract despite churn concerns.</li>
+          <li><svg class="bullet-icon bullet-check" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M5 8L7 10L11 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Veteran user of Hubspot, Salesforce, Gainsight and Zendesk.</li>
+          <li><svg class="bullet-icon bullet-x" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M6 6L10 10M10 6L6 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Limited experience communicating with C-level stakeholders.</li>
+          <li id="warning-bullet"><svg class="bullet-icon bullet-warning" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M8 5V8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="10.75" r="0.6" fill="currentColor"/></svg><span style="color: #b38100;" id="warning-bullet-text">Renewal strategy and stakeholder conflict management not evaluated.</span></li>
+        </ul>
+        <!-- Inline score editor -->
+        <div class="score-editor" id="overall-score-editor" style="display:none;">
+          <span class="score-editor-label">New score:</span>
+          <input type="number" class="score-input" id="overall-score-input" value="82" min="0" max="100" />
+          <span class="score-out-of">/ 100</span>
+          <div style="flex:1;"></div>
+          <button class="btn btn-sm btn-primary" onclick="saveOverallScore()">Save</button>
+          <button class="btn btn-sm btn-ghost" onclick="cancelOverallScore()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ QUESTIONS & SCORES ═══ -->
+    <div class="questions-header">
+      <div class="section-label" style="margin-bottom: 0;">QUESTIONS &amp; SCORES</div>
+    </div>
+
+    <!-- ── Q1: Scored ── -->
+    <div class="question-card" id="q1">
+      <div class="question-top">
+        <div>
+          <div class="q-score"><div class="q-score-value">3.2</div></div>
+          <div class="q-weight">Weight<br>25%</div>
+        </div>
+        <div class="question-title">Can you walk me through your experience managing enterprise-level customers?</div>
+        <a class="question-timestamp" href="#"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><polygon points="6,3 13,8 6,13" fill="currentColor"/></svg>00:58</a>
+      </div>
+      <div class="question-body">
+        <div class="eval-text">The candidate provided a comprehensive and highly relevant overview of their experience managing enterprise-level customers. They described overseeing a portfolio of high-value accounts totaling over $8M in ARR, with individual accounts ranging from $100K to $1.2M.</div>
+        <div class="strengths-label">Strengths Noted:</div>
+        <ul class="strengths-list">
+          <li>Demonstrated ownership of high-value, complex accounts</li>
+          <li>Effective at engaging and influencing executive stakeholders</li>
+          <li>Strong experience with QBRs and success planning</li>
+        </ul>
+        <button class="show-criteria" onclick="toggleCriteria(this, 'criteria-1')"><svg viewBox="0 0 14 14" fill="none"><path d="M5 3L9 7L5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>SHOW EVALUATION CRITERIA</button>
+        <div class="criteria-content" id="criteria-1">
+          <div class="criteria-item"><span class="criteria-score">5</span> Exceptional — 10+ years enterprise CS with proven portfolio growth and C-suite engagement</div>
+          <div class="criteria-item"><span class="criteria-score">4</span> Strong — 7+ years with demonstrable account management success</div>
+          <div class="criteria-item"><span class="criteria-score">3</span> Competent — 4+ years of relevant experience with solid fundamentals</div>
+          <div class="criteria-item"><span class="criteria-score">2</span> Developing — 1-3 years with some relevant experience</div>
+          <div class="criteria-item"><span class="criteria-score">1</span> Insufficient — No relevant enterprise CS experience</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Q2: Scored ── -->
+    <div class="question-card" id="q2">
+      <div class="question-top">
+        <div>
+          <div class="q-score"><div class="q-score-value">4.5</div></div>
+          <div class="q-weight">Weight<br>15%</div>
+        </div>
+        <div class="question-title">What's your role in renewals and expansion—do you own revenue targets?</div>
+        <a class="question-timestamp" href="#"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><polygon points="6,3 13,8 6,13" fill="currentColor"/></svg>09:31</a>
+      </div>
+      <div class="question-body">
+        <div class="eval-text">The candidate provided a comprehensive overview of their experience managing enterprise-level customers. They described overseeing a portfolio of high-value accounts.</div>
+        <button class="show-criteria" onclick="toggleCriteria(this, 'criteria-2')"><svg viewBox="0 0 14 14" fill="none"><path d="M5 3L9 7L5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>SHOW EVALUATION CRITERIA</button>
+        <div class="criteria-content" id="criteria-2">
+          <div class="criteria-item"><span class="criteria-score">5</span> Exceptional — Owns full revenue responsibility with proven expansion track record</div>
+          <div class="criteria-item"><span class="criteria-score">3</span> Competent — Supports renewal process with indirect revenue influence</div>
+          <div class="criteria-item"><span class="criteria-score">1</span> Insufficient — No revenue ownership or renewal experience</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ FLAGGED DIVIDER ═══ -->
+    <div class="flagged-divider" id="flagged-section">
+      <div class="flagged-label">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1.5L14.5 14H1.5L8 1.5Z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M8 6V9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="8" cy="11" r="0.6" fill="currentColor"/></svg>
+        <span id="flagged-count-label">FLAGGED — NEEDS REVIEW (2)</span>
+      </div>
+    </div>
+
+    <!-- ── Q5: POSSIBLY REPHRASED ── -->
+    <div class="question-card is-incomplete" id="q5-card">
+      <div class="question-top">
+        <div>
+          <div class="q-score incomplete" id="q5-badge">
+            <svg class="q-score-icon" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 4V10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="13.5" r="1" fill="currentColor"/></svg>
+          </div>
+        </div>
+        <div class="question-title">Describe your approach to account renewals and preventing churn.</div>
+      </div>
+      <div class="incomplete-reason" id="q5-reason">
+        <span class="reason-tag warning"><svg viewBox="0 0 12 12" fill="none"><path d="M6 1L11 10.5H1L6 1Z" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/><path d="M6 4.5V6.5" stroke="currentColor" stroke-width="1" stroke-linecap="round"/><circle cx="6" cy="8" r="0.5" fill="currentColor"/></svg>Possibly rephrased</span>
+      </div>
+      <div class="ai-suggestion" id="q5-suggestion">
+        <svg class="ai-suggestion-icon" viewBox="0 0 16 16" fill="none"><path d="M8 1L9.5 5.5L14 4L10.5 8L14 12L9.5 10.5L8 15L6.5 10.5L2 12L5.5 8L2 4L6.5 5.5L8 1Z" fill="currentColor"/></svg>
+        <div class="ai-suggestion-text"><strong>AI detected related content:</strong> At 23:14, the interviewer asked "How do you think about keeping customers happy when contracts are coming up?" — this may cover the same competency. Review the transcript to confirm.</div>
+      </div>
+      <div class="review-actions" id="q5-actions">
+        <a class="review-link" href="#" onclick="jumpToTranscript(event, '23:14')"><svg viewBox="0 0 14 14" fill="none"><polygon points="5,2 12,7 5,12" fill="currentColor"/></svg>Jump to 23:14 in transcript</a>
+        <span class="action-sep">|</span>
+        <button class="review-link" onclick="showManualScore('q5')"><svg viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Add manual score</button>
+        <span class="action-sep">|</span>
+        <button class="review-link" style="color: #67717e;" onclick="dismissFlag('q5')">Dismiss flag</button>
+      </div>
+      <!-- Manual score form (hidden) -->
+      <div class="manual-score-form" id="q5-score-form">
+        <div class="msf-row">
+          <span class="msf-label">Score:</span>
+          <input type="number" class="msf-input" id="q5-score-input" min="1" max="5" step="0.1" placeholder="—" />
+          <span class="msf-of">/ 5</span>
+          <span class="msf-label" style="margin-left: 12px;">Weight:</span>
+          <input type="number" class="msf-input" id="q5-weight-input" value="15" min="0" max="100" />
+          <span class="msf-of">%</span>
+        </div>
+        <textarea class="msf-note-input" id="q5-note-input" placeholder="Optional note — e.g., "Candidate addressed this when discussing renewals at 23:14""></textarea>
+        <div class="msf-actions">
+          <button class="btn btn-sm btn-primary" onclick="saveManualScore('q5')">Save Score</button>
+          <button class="btn btn-sm btn-ghost" onclick="hideManualScore('q5')">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Q7: NOT ASKED ── -->
+    <div class="question-card is-not-asked" id="q7-card">
+      <div class="question-top">
+        <div>
+          <div class="q-score not-asked" id="q7-badge">
+            <svg class="q-score-icon" width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M5 5L13 13M13 5L5 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+        </div>
+        <div class="question-title" id="q7-title">How do you handle executive stakeholder conflicts when multiple VPs have competing priorities?</div>
+      </div>
+      <div class="incomplete-reason" id="q7-reason">
+        <span class="reason-tag error"><svg viewBox="0 0 12 12" fill="none"><path d="M4 4L8 8M8 4L4 8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>Not asked</span>
+      </div>
+      <div class="incomplete-note" id="q7-note">This question was not found in the interview transcript. The evaluation does not include this competency area.</div>
+      <div class="review-actions" id="q7-actions">
+        <button class="review-link" onclick="showManualScore('q7')"><svg viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Add manual score</button>
+        <span class="action-sep">|</span>
+        <button class="review-link" onclick="markAsNA('q7')"><svg viewBox="0 0 14 14" fill="none"><path d="M2 7h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Mark as N/A</button>
+        <span class="action-sep">|</span>
+        <button class="review-link" style="color: #67717e;" onclick="dismissFlag('q7')">Dismiss flag</button>
+      </div>
+      <div class="manual-score-form" id="q7-score-form">
+        <div class="msf-row">
+          <span class="msf-label">Score:</span>
+          <input type="number" class="msf-input" id="q7-score-input" min="1" max="5" step="0.1" placeholder="—" />
+          <span class="msf-of">/ 5</span>
+          <span class="msf-label" style="margin-left: 12px;">Weight:</span>
+          <input type="number" class="msf-input" id="q7-weight-input" value="10" min="0" max="100" />
+          <span class="msf-of">%</span>
+        </div>
+        <textarea class="msf-note-input" id="q7-note-input" placeholder="Optional note — e.g., reason for score or additional context"></textarea>
+        <div class="msf-actions">
+          <button class="btn btn-sm btn-primary" onclick="saveManualScore('q7')">Save Score</button>
+          <button class="btn btn-sm btn-ghost" onclick="hideManualScore('q7')">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Q8: Scored ── -->
+    <div class="question-card" id="q8">
+      <div class="question-top">
+        <div>
+          <div class="q-score"><div class="q-score-value">3.8</div></div>
+          <div class="q-weight">Weight<br>10%</div>
+        </div>
+        <div class="question-title">Tell me about a time you had to onboard a complex enterprise customer.</div>
+        <a class="question-timestamp" href="#"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><polygon points="6,3 13,8 6,13" fill="currentColor"/></svg>28:45</a>
+      </div>
+      <div class="question-body">
+        <div class="eval-text">Candidate described a detailed onboarding process for a $500K account with multiple stakeholders across 3 departments. Showed strong project management skills.</div>
+        <button class="show-criteria" onclick="toggleCriteria(this, 'criteria-8')"><svg viewBox="0 0 14 14" fill="none"><path d="M5 3L9 7L5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>SHOW EVALUATION CRITERIA</button>
+        <div class="criteria-content" id="criteria-8">
+          <div class="criteria-item"><span class="criteria-score">5</span> Exceptional — Led multi-department onboarding for $1M+ accounts</div>
+          <div class="criteria-item"><span class="criteria-score">3</span> Competent — Managed standard onboarding with multiple stakeholders</div>
+          <div class="criteria-item"><span class="criteria-score">1</span> Insufficient — No enterprise onboarding experience</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /panel-body -->
+
+  <!-- ═══ ACTION BAR ═══ -->
+  <div class="action-bar" id="action-bar">
+    <div class="action-bar-left">
+      <button class="btn btn-md btn-secondary" onclick="toggleOverallScoreEditor()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M11.5 1.5L14.5 4.5L5 14H2V11L11.5 1.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        Adjust Overall Score
+      </button>
+    </div>
+    <div class="action-bar-right">
+      <button class="btn btn-md btn-primary" id="mark-complete-btn" onclick="showCompleteModal()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3.5 8L6.5 11L12.5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Mark as Complete
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ SUCCESS BAR (hidden, shown after complete) ═══ -->
+  <div class="success-bar" id="success-bar">
+    <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M6 10L9 13L14 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div>
+      <div class="success-bar-text">Interview marked as complete</div>
+      <div class="success-bar-sub" id="success-ats-note"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══ MODAL: MARK AS COMPLETE ═══ -->
+<div class="modal-overlay" id="complete-modal">
+  <div class="modal">
+    <div class="modal-title">Mark interview as complete?</div>
+    <div class="modal-body">
+      This will finalize the evaluation with the current scores<span id="modal-unresolved-note"> (including <strong id="modal-unresolved-count">2</strong> unresolved flagged questions)</span>. This action can be undone from the interview settings.
+    </div>
+    <div class="modal-checkbox" id="ats-checkbox" onclick="toggleATSCheckbox()">
+      <div class="checkbox-box"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div>
+        <div class="checkbox-label">Push evaluation to ATS</div>
+        <div class="checkbox-desc">Send the finalized score and evaluation to Greenhouse for this candidate.</div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-md btn-ghost" onclick="hideCompleteModal()">Cancel</button>
+      <button class="btn btn-md btn-primary" onclick="confirmComplete()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3.5 8L6.5 11L12.5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Mark as Complete
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TOAST CONTAINER ═══ -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+const state = {
+  flaggedCount: 2,        // total unresolved flags
+  evaluatedCount: 7,      // of 9
+  overallScore: 82,
+  overallScoreEdited: false,
+  atsChecked: false,
+  isComplete: false,
+  q5: { status: 'flagged', score: null },  // possibly rephrased
+  q7: { status: 'flagged', score: null },  // not asked
+};
+
+// ═══════════════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════════════
+function switchTab(tab) {
+  document.getElementById('tab-eval').classList.toggle('active', tab === 'eval');
+  document.getElementById('tab-transcript').classList.toggle('active', tab === 'transcript');
+  if (tab === 'transcript') {
+    showToast('info', 'Transcript view would open here');
+  }
+}
+
+// ═══════════════════════════════════════════════
+// SCROLL TO FLAGGED
+// ═══════════════════════════════════════════════
+function scrollToFlagged(e) {
+  e.preventDefault();
+  document.getElementById('flagged-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ═══════════════════════════════════════════════
+// JUMP TO TRANSCRIPT
+// ═══════════════════════════════════════════════
+function jumpToTranscript(e, timestamp) {
+  e.preventDefault();
+  switchTab('transcript');
+  showToast('info', `Jumping to ${timestamp} in transcript`);
+}
+
+// ═══════════════════════════════════════════════
+// TOGGLE CRITERIA
+// ═══════════════════════════════════════════════
+function toggleCriteria(btn, id) {
+  const content = document.getElementById(id);
+  const isVisible = content.classList.contains('visible');
+  content.classList.toggle('visible');
+  btn.classList.toggle('expanded');
+  btn.innerHTML = isVisible
+    ? '<svg viewBox="0 0 14 14" fill="none"><path d="M5 3L9 7L5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>SHOW EVALUATION CRITERIA'
+    : '<svg viewBox="0 0 14 14" fill="none"><path d="M5 3L9 7L5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>HIDE EVALUATION CRITERIA';
+}
+
+// ═══════════════════════════════════════════════
+// COPY TEXT
+// ═══════════════════════════════════════════════
+function copyText(id) {
+  const text = document.getElementById(id).innerText;
+  navigator.clipboard.writeText(text).then(() => showToast('success', 'Summary copied to clipboard'));
+}
+
+// ═══════════════════════════════════════════════
+// SHOW / HIDE MANUAL SCORE
+// ═══════════════════════════════════════════════
+function showManualScore(qId) {
+  const form = document.getElementById(`${qId}-score-form`);
+  form.classList.add('visible');
+  form.querySelector('.msf-input').focus();
+}
+function hideManualScore(qId) {
+  document.getElementById(`${qId}-score-form`).classList.remove('visible');
+}
+
+// ═══════════════════════════════════════════════
+// SAVE MANUAL SCORE
+// ═══════════════════════════════════════════════
+function saveManualScore(qId) {
+  const scoreVal = document.getElementById(`${qId}-score-input`).value;
+  const weightVal = document.getElementById(`${qId}-weight-input`).value;
+  const noteVal = document.getElementById(`${qId}-note-input`).value;
+
+  if (!scoreVal || scoreVal < 1 || scoreVal > 5) {
+    showToast('info', 'Enter a score between 1 and 5');
+    return;
+  }
+
+  const card = document.getElementById(`${qId}-card`);
+  const badge = document.getElementById(`${qId}-badge`);
+  const reason = document.getElementById(`${qId}-reason`);
+  const actions = document.getElementById(`${qId}-actions`);
+
+  // Update card styling
+  card.className = 'question-card is-manually-scored';
+
+  // Update badge to show score
+  badge.className = 'q-score manual-scored';
+  badge.innerHTML = `<div class="q-score-value" style="color:#6b46c1;">${parseFloat(scoreVal).toFixed(1)}</div>`;
+
+  // Add weight under badge
+  const weightDiv = document.createElement('div');
+  weightDiv.className = 'q-weight';
+  weightDiv.innerHTML = `Weight<br>${weightVal}%`;
+  badge.parentElement.appendChild(weightDiv);
+
+  // Update reason tag
+  reason.innerHTML = `<span class="reason-tag scored-tag"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Manual score</span>`;
+
+  // Replace actions with resolved note
+  actions.innerHTML = '';
+  const form = document.getElementById(`${qId}-score-form`);
+  form.classList.remove('visible');
+
+  // Add note if provided
+  if (noteVal) {
+    const noteEl = document.createElement('div');
+    noteEl.className = 'resolved-note';
+    noteEl.style.marginLeft = '52px';
+    noteEl.style.marginTop = '8px';
+    noteEl.innerHTML = `<span style="color:#505863; font-style:normal;">"${noteVal}"</span> — <span class="editor-name">You</span>`;
+    reason.parentElement.insertBefore(noteEl, actions);
+  }
+
+  // Hide suggestion if present
+  const suggestion = document.getElementById(`${qId}-suggestion`);
+  if (suggestion) suggestion.style.display = 'none';
+  const incNote = document.getElementById(`${qId}-note`);
+  if (incNote) incNote.style.display = 'none';
+
+  // Update state
+  state[qId] = { status: 'scored', score: parseFloat(scoreVal) };
+  resolveFlag(qId);
+  showToast('success', `Score ${parseFloat(scoreVal).toFixed(1)} saved`);
+}
+
+// ═══════════════════════════════════════════════
+// DISMISS FLAG
+// ═══════════════════════════════════════════════
+function dismissFlag(qId) {
+  const card = document.getElementById(`${qId}-card`);
+  const reason = document.getElementById(`${qId}-reason`);
+  const actions = document.getElementById(`${qId}-actions`);
+
+  card.className = 'question-card is-resolved';
+  reason.innerHTML = `<span class="reason-tag resolved-tag"><svg viewBox="0 0 12 12" fill="none"><path d="M2 7h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>Dismissed</span>`;
+
+  // Remove actions, suggestion, note
+  actions.innerHTML = `<div class="resolved-note"><span class="editor-name">You</span> dismissed this flag</div>`;
+  const suggestion = document.getElementById(`${qId}-suggestion`);
+  if (suggestion) suggestion.style.display = 'none';
+  const form = document.getElementById(`${qId}-score-form`);
+  if (form) form.classList.remove('visible');
+  const incNote = document.getElementById(`${qId}-note`);
+  if (incNote) incNote.style.display = 'none';
+
+  state[qId] = { status: 'dismissed', score: null };
+  resolveFlag(qId);
+  showToast('success', 'Flag dismissed');
+}
+
+// ═══════════════════════════════════════════════
+// MARK AS N/A
+// ═══════════════════════════════════════════════
+function markAsNA(qId) {
+  const card = document.getElementById(`${qId}-card`);
+  const badge = document.getElementById(`${qId}-badge`);
+  const reason = document.getElementById(`${qId}-reason`);
+  const actions = document.getElementById(`${qId}-actions`);
+  const title = document.getElementById(`${qId}-title`);
+
+  card.className = 'question-card is-na';
+  badge.className = 'q-score na-score';
+  badge.innerHTML = `<span class="q-na-label">N/A</span>`;
+  reason.innerHTML = `<span class="reason-tag na-tag"><svg viewBox="0 0 12 12" fill="none"><path d="M2 7h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>Not applicable</span>`;
+  if (title) title.style.color = '#9ca5ae';
+  actions.innerHTML = `<div class="resolved-note"><span class="editor-name">You</span> marked as N/A — excluded from scoring</div>`;
+
+  const incNote = document.getElementById(`${qId}-note`);
+  if (incNote) incNote.style.display = 'none';
+  const form = document.getElementById(`${qId}-score-form`);
+  if (form) form.classList.remove('visible');
+
+  state[qId] = { status: 'na', score: null };
+  resolveFlag(qId);
+  showToast('success', 'Marked as N/A — excluded from overall score');
+}
+
+// ═══════════════════════════════════════════════
+// RESOLVE FLAG — update counters and banner
+// ═══════════════════════════════════════════════
+function resolveFlag(qId) {
+  state.flaggedCount = Math.max(0, state.flaggedCount - 1);
+
+  // Update evaluated count
+  if (state[qId].status === 'scored') {
+    state.evaluatedCount = Math.min(9, state.evaluatedCount + 1);
+  }
+
+  // Update metadata
+  const countEl = document.getElementById('eval-count');
+  if (state.flaggedCount === 0) {
+    countEl.textContent = state[qId].status === 'na' ? `${state.evaluatedCount} of 9 evaluated (1 N/A)` : `${state.evaluatedCount} of 9 evaluated`;
+    countEl.className = 'meta-success';
+  } else {
+    countEl.textContent = `${state.evaluatedCount} of 9 evaluated`;
+  }
+
+  // Update banner reason items
+  if (qId === 'q7') document.getElementById('reason-not-asked').classList.add('resolved-item');
+  if (qId === 'q5') document.getElementById('reason-rephrased').classList.add('resolved-item');
+
+  // Update flagged section label
+  const flagLabel = document.getElementById('flagged-count-label');
+  if (state.flaggedCount === 0) {
+    flagLabel.textContent = 'FLAGGED — ALL RESOLVED';
+    flagLabel.style.color = '#259b71';
+    flagLabel.parentElement.querySelector('svg').style.color = '#259b71';
+  } else {
+    flagLabel.textContent = `FLAGGED — NEEDS REVIEW (${state.flaggedCount})`;
+  }
+
+  // Update banner
+  updateBanner();
+
+  // Update modal unresolved count
+  document.getElementById('modal-unresolved-count').textContent = state.flaggedCount;
+  document.getElementById('modal-unresolved-note').style.display = state.flaggedCount === 0 ? 'none' : '';
+
+  // Update warning bullet
+  updateWarningBullet();
+}
+
+function updateBanner() {
+  const banner = document.getElementById('banner');
+  const title = document.getElementById('banner-title');
+  const body = document.getElementById('banner-body');
+
+  if (state.flaggedCount === 0) {
+    banner.classList.add('resolved');
+    title.textContent = 'All Flags Resolved';
+    body.innerHTML = `All flagged questions have been addressed. You can now mark this interview as complete.`;
+    // Update banner icon to checkmark
+    banner.querySelector('.banner-icon').innerHTML = '<circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M6 10L9 13L14 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>';
+    document.querySelector('.banner-actions').style.display = 'none';
+  }
+}
+
+function updateWarningBullet() {
+  const bullet = document.getElementById('warning-bullet');
+  const text = document.getElementById('warning-bullet-text');
+  if (state.flaggedCount === 0) {
+    text.style.color = '#259b71';
+    text.textContent = 'All flagged competencies have been reviewed.';
+    bullet.querySelector('.bullet-icon').classList.remove('bullet-warning');
+    bullet.querySelector('.bullet-icon').classList.add('bullet-check');
+  }
+}
+
+// ═══════════════════════════════════════════════
+// OVERALL SCORE EDITOR
+// ═══════════════════════════════════════════════
+function toggleOverallScoreEditor() {
+  const editor = document.getElementById('overall-score-editor');
+  const box = document.getElementById('overall-score-box');
+  const isVisible = editor.style.display === 'flex';
+
+  if (isVisible) {
+    editor.style.display = 'none';
+    box.classList.remove('editing-score');
+  } else {
+    editor.style.display = 'flex';
+    box.classList.add('editing-score');
+    document.getElementById('overall-score-input').value = state.overallScore;
+    document.getElementById('overall-score-input').focus();
+    document.getElementById('overall-score-input').select();
+  }
+}
+
+function saveOverallScore() {
+  const val = parseInt(document.getElementById('overall-score-input').value);
+  if (isNaN(val) || val < 0 || val > 100) {
+    showToast('info', 'Enter a score between 0 and 100');
+    return;
+  }
+  state.overallScore = val;
+  state.overallScoreEdited = true;
+
+  document.getElementById('overall-score-value').textContent = val;
+  const label = document.getElementById('overall-score-label');
+  label.textContent = 'Adjusted';
+  label.style.color = '#6b46c1';
+  label.style.fontSize = '8px';
+
+  document.getElementById('overall-score-editor').style.display = 'none';
+  document.getElementById('overall-score-box').classList.remove('editing-score');
+
+  showToast('success', `Overall score updated to ${val}`);
+}
+
+function cancelOverallScore() {
+  document.getElementById('overall-score-editor').style.display = 'none';
+  document.getElementById('overall-score-box').classList.remove('editing-score');
+}
+
+// ═══════════════════════════════════════════════
+// MARK AS COMPLETE MODAL
+// ═══════════════════════════════════════════════
+function showCompleteModal() {
+  document.getElementById('complete-modal').classList.add('visible');
+}
+
+function hideCompleteModal() {
+  document.getElementById('complete-modal').classList.remove('visible');
+}
+
+function toggleATSCheckbox() {
+  state.atsChecked = !state.atsChecked;
+  document.getElementById('ats-checkbox').classList.toggle('checked', state.atsChecked);
+}
+
+function confirmComplete() {
+  state.isComplete = true;
+  hideCompleteModal();
+
+  // Hide action bar, show success bar
+  document.getElementById('action-bar').style.display = 'none';
+  const successBar = document.getElementById('success-bar');
+  successBar.classList.add('visible');
+
+  if (state.atsChecked) {
+    document.getElementById('success-ats-note').textContent = 'Score and evaluation pushed to Greenhouse.';
+  }
+
+  // Update overall score box
+  const box = document.getElementById('overall-score-box');
+  box.classList.remove('partial');
+  box.classList.add('complete-score');
+  document.getElementById('partial-badge').classList.add('hidden');
+  const label = document.getElementById('overall-score-label');
+  label.textContent = state.overallScoreEdited ? 'Adjusted' : 'Score';
+  label.style.color = '#259b71';
+
+  // Update partial note
+  const noteEl = document.getElementById('partial-note-text');
+  noteEl.classList.add('resolved-note');
+  document.getElementById('partial-note-label').textContent = 'Evaluation finalized' + (state.overallScoreEdited ? ' (score manually adjusted)' : '');
+
+  // Update meta
+  const countEl = document.getElementById('eval-count');
+  countEl.className = 'meta-success';
+
+  // Update banner
+  const banner = document.getElementById('banner');
+  banner.classList.add('resolved');
+  document.getElementById('banner-title').textContent = 'Interview Complete';
+  document.getElementById('banner-body').innerHTML = 'This evaluation has been finalized.' + (state.atsChecked ? ' Score and evaluation have been pushed to Greenhouse.' : '');
+  document.querySelector('.banner-reasons').style.display = 'none';
+  document.querySelector('.banner-actions').style.display = 'none';
+  banner.querySelector('.banner-icon').innerHTML = '<circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M6 10L9 13L14 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>';
+
+  // Update summary note
+  document.getElementById('summary-note').style.color = '#259b71';
+  document.getElementById('summary-note').textContent = 'Evaluation finalized' + (state.overallScoreEdited ? ' with adjusted score.' : '.');
+
+  showToast('success', state.atsChecked ? 'Interview complete — pushed to Greenhouse' : 'Interview marked as complete');
+}
+
+// ═══════════════════════════════════════════════
+// TOASTS
+// ═══════════════════════════════════════════════
+function showToast(type, message) {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  const icon = type === 'success'
+    ? '<svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M5 8L7 10L11 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    : '<svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M8 5V8.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="8" cy="10.75" r="0.6" fill="currentColor"/></svg>';
+  toast.innerHTML = icon + message;
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.classList.add('hiding');
+    setTimeout(() => toast.remove(), 300);
+  }, 2500);
+}
+</script>
+
+</body>
+</html>
