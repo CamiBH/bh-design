@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BrightHire · Workflows</title>
+<style>
+
+:root{
+  --rail-a:#1268CE; --rail-b:#0D53AE;
+  --purple:#4B22D9; --purple-d:#3C17BC; --purple-w:#F1ECFE;
+  --ink:#171A2E; --ink2:#5C6379; --ink3:#9298AB; --ink4:#B6BBC9;
+  --bg:#F5F6FB; --panel:#FFFFFF; --line:#E9EAF1; --line2:#F1F2F7;
+  --amber:#E08700; --amber-w:#FEF3E0;
+  --violet:#7A3FED; --violet-w:#F3EDFE;
+  --blue:#2563EB; --blue-w:#E9F0FE;
+  --green:#0E9F6E; --green-w:#E4F7EF;
+  --red:#DE3B3B; --red-w:#FDECEC;
+  --nav:#1C1E36; --nav-on:#343765;
+  --sh:0 1px 2px rgba(23,26,46,.04);
+  --sh-md:0 2px 6px rgba(23,26,46,.06),0 1px 2px rgba(23,26,46,.04);
+  --sh-lg:0 16px 40px rgba(23,26,46,.13),0 3px 8px rgba(23,26,46,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{background:var(--bg);color:var(--ink);
+  font:14px/1.5 "Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;letter-spacing:-.005em}
+button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+input,select{font:inherit;color:inherit}
+h1,h2,h3,h4{margin:0;font-weight:700;letter-spacing:-.018em}
+a{color:inherit;text-decoration:none;cursor:pointer}
+svg.i{width:16px;height:16px;flex:0 0 16px}
+
+/* ── prototype bar ───────────────────────────── */
+.pbar{position:sticky;top:0;z-index:100;display:flex;gap:5px;align-items:center;flex-wrap:wrap;
+  padding:7px 14px;background:#0E1020;color:#9AA1B4;font-size:11.5px}
+.pbar b{color:#fff;font-weight:600;letter-spacing:.04em;margin-right:6px;font-size:10.5px}
+.pbar button{padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.07);color:#A9B0C2;font-size:11.5px}
+.pbar button:hover{background:rgba(255,255,255,.16);color:#fff}
+.pbar button.on{background:#fff;color:#0E1020;font-weight:600}
+.pbar .sp{flex:1}
+
+/* ── shell ───────────────────────────────────── */
+.shell{display:flex;height:calc(100vh - 31px);overflow:hidden}
+
+.side{width:228px;flex:0 0 228px;background:var(--nav);color:#A6A9C4;
+  display:flex;flex-direction:column;padding:0;overflow:hidden}
+.side .brand{display:flex;align-items:center;gap:11px;padding:22px 20px 24px}
+.side .brand .m{width:26px;height:26px;border-radius:8px;background:linear-gradient(150deg,#8E6BFF,#6B46F0);
+  display:grid;place-items:center;flex:0 0 26px}
+.side .brand .m i{width:9px;height:9px;border-radius:50%;background:#fff;display:block;opacity:.94}
+.side .brand b{color:#fff;font-size:16.5px;font-weight:700;letter-spacing:-.02em}
+.side nav{flex:1;overflow:auto;padding:0 12px}
+.side .grp{font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:#6B6E90;font-weight:700;padding:20px 10px 8px}
+.side a.nv{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:9px;font-size:13.5px;
+  font-weight:500;color:#B3B6CE;margin-bottom:2px;transition:.13s}
+.side a.nv:hover{background:rgba(255,255,255,.06);color:#fff}
+.side a.nv.on{background:var(--nav-on);color:#fff;font-weight:600}
+.side a.nv svg{width:17px;height:17px;flex:0 0 17px;opacity:.9}
+.side .me{display:flex;align-items:center;gap:11px;padding:16px 20px;border-top:1px solid rgba(255,255,255,.08)}
+.side .me .av{width:32px;height:32px;border-radius:50%;background:#4A4D78;color:#fff;
+  display:grid;place-items:center;font-size:11.5px;font-weight:700;flex:0 0 32px}
+.side .me b{display:block;color:#fff;font-size:13px;font-weight:600}
+.side .me span{display:block;color:#6B6E90;font-size:11.5px}
+
+.stage{flex:1;overflow:auto;position:relative;background:var(--bg)}
+
+/* ── index page ──────────────────────────────── */
+.idx{max-width:1290px;margin:0 auto;padding:34px 40px 80px}
+.idx .hd{display:flex;align-items:flex-start;gap:20px;margin-bottom:28px}
+.idx .hd h1{font-size:27px;letter-spacing:-.026em}
+.idx .hd p{margin:9px 0 0;font-size:14px;color:var(--ink2);line-height:1.55;max-width:520px}
+.idx .hd .btn{margin-left:auto;flex:0 0 auto}
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:13px;padding:17px 19px}
+.kpi .l{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);font-weight:700}
+.kpi .v{font-size:30px;font-weight:700;letter-spacing:-.03em;margin-top:9px;line-height:1}
+.kpi .v small{font-size:14px;font-weight:600;color:var(--ink3);margin-left:2px}
+
+.alert{display:flex;align-items:center;gap:14px;background:#FDF4E5;border:1px solid #F3E1C2;
+  border-radius:13px;padding:15px 18px;margin-bottom:26px}
+.alert .rd{width:32px;height:32px;border-radius:50%;background:#F0A22E;color:#fff;display:grid;place-items:center;flex:0 0 32px}
+.alert .rd svg{width:17px;height:17px}
+.alert b{display:block;font-size:14px;color:#4A3410;font-weight:700}
+.alert span{display:block;font-size:13px;color:#7A5D28;margin-top:2px}
+.alert a{margin-left:auto;color:#9A6B12;font-weight:700;font-size:13.5px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.alert a:hover{color:#7A5209}
+
+.filters{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.segs{display:inline-flex;background:#EFEFF4;border-radius:11px;padding:3px}
+.segs button{padding:6px 14px;border-radius:8px;font-size:13px;font-weight:600;color:var(--ink2)}
+.segs button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(23,26,46,.07)}
+.srch{position:relative;margin-left:auto;width:250px}
+.srch input{width:100%;padding:9px 12px 9px 34px;border:1px solid var(--line);border-radius:10px;
+  background:#fff;font-size:13.5px}
+.srch input:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 3px var(--purple-w)}
+.srch svg{position:absolute;left:11px;top:10px;width:15px;height:15px;color:var(--ink4)}
+
+.thead{display:grid;grid-template-columns:minmax(240px,1.5fr) 292px 100px 158px 132px 36px;gap:18px;
+  padding:0 20px 10px;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink3);font-weight:700}
+.wrow{display:grid;grid-template-columns:minmax(240px,1.5fr) 292px 100px 158px 132px 36px;gap:18px;align-items:center;
+  background:#fff;border:1px solid var(--line);border-radius:13px;padding:16px 20px;margin-bottom:10px;
+  transition:.14s;text-align:left;width:100%;cursor:pointer}
+.wrow:hover{border-color:#D5D6E4;box-shadow:0 3px 10px rgba(23,26,46,.06)}
+.wrow .nm{display:flex;align-items:center;gap:13px;min-width:0}
+.wrow .nm .sq{width:34px;height:34px;border-radius:10px;background:var(--purple-w);color:var(--purple);
+  display:grid;place-items:center;flex:0 0 34px}
+.wrow .nm .sq svg{width:16px;height:16px}
+.wrow .nm b{display:block;font-size:14.5px;font-weight:700;letter-spacing:-.014em;line-height:1.3;color:var(--ink)}
+.wrow .nm span{display:block;font-size:12.5px;color:var(--ink3);margin-top:3px}
+.pipe{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.pipe .sep{color:var(--ink4);font-size:12px}
+.pipe .pc{padding:3px 9px;border-radius:7px;font-size:11.5px;font-weight:700;
+  background:#F2F2F7;color:#A9ADBE}
+.pipe .pc.a{background:var(--purple-w);color:#5B3FD6}
+.wrow .num{font-size:15px;font-weight:700;letter-spacing:-.02em}
+.wrow .num span{display:block;font-size:12px;color:var(--ink3);font-weight:500;margin-top:2px}
+.wrow .ed{font-size:13px;color:var(--ink2)}
+.wrow .ed span{display:block;font-size:12.5px;color:var(--ink3);margin-top:2px}
+.wrow .kb{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:var(--ink4);justify-self:end}
+.wrow .kb:hover{background:#F1F1F6;color:var(--ink)}
+.emptyrows{background:#fff;border:1px dashed var(--line);border-radius:13px;padding:44px;text-align:center;color:var(--ink3);font-size:13.5px}
+
+@media (max-width:1200px){
+  .thead,.wrow{grid-template-columns:minmax(200px,1.4fr) 250px 92px 140px 118px 34px;gap:14px}
+}
+@media (max-width:980px){
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .thead{display:none}
+  .wrow{grid-template-columns:1fr 40px;row-gap:12px}
+  .wrow .pipe,.wrow .num,.wrow .ed{grid-column:1/-1}
+}
+
+/* ── buttons ─────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;border-radius:10px;
+  font-size:13.5px;font-weight:600;border:1px solid transparent;transition:.14s;white-space:nowrap}
+.btn-p{background:var(--purple);color:#fff}
+.btn-p:hover{background:var(--purple-d)}
+.btn-s{background:#fff;border-color:var(--line);color:var(--ink);box-shadow:var(--sh)}
+.btn-s:hover{border-color:#D8DAE5}
+.btn-g{color:var(--ink2)} .btn-g:hover{background:#F1F2F7;color:var(--ink)}
+.btn-d{background:var(--red-w);color:var(--red)} .btn-d:hover{background:#FBDCDC}
+.btn-sm{padding:7px 12px;font-size:12.5px;border-radius:9px}
+.btn-w{width:100%}
+.btn[disabled]{opacity:.45;pointer-events:none}
+
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:7px;font-size:11.5px;font-weight:600}
+.chip .d{width:6px;height:6px;border-radius:50%;background:currentColor}
+.c-live{background:var(--green-w);color:var(--green)}
+.c-draft{background:#F1F2F7;color:var(--ink2)}
+.c-paused{background:var(--amber-w);color:var(--amber)}
+.c-test{background:var(--violet-w);color:var(--violet)}
+.c-blue{background:var(--blue-w);color:var(--blue)}
+
+.muted{color:var(--ink2)} .tiny{font-size:12px;color:var(--ink3)}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+.row{display:flex;align-items:center;gap:10px} .grow{flex:1}
+
+label.fl{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:7px}
+label.fl span{font-weight:500;color:var(--ink3)}
+.inp,select.inp{width:100%;padding:11px 14px;border:1px solid var(--line);border-radius:11px;background:#fff;
+  font-size:14px;transition:.14s;box-shadow:var(--sh)}
+.inp::placeholder{color:var(--ink4)}
+.inp:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 3px var(--purple-w)}
+select.inp{appearance:none;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239298AB' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 13px center;background-size:16px;padding-right:38px}
+.inp-sm{padding:8px 11px;font-size:13px;border-radius:9px}
+select.inp-sm{background-position:right 9px center;background-size:14px;padding-right:30px}
+.sw{position:relative;width:38px;height:21px;border-radius:999px;background:#D9DCE6;transition:.16s;flex:0 0 38px;cursor:pointer}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:17px;height:17px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.22);transition:.16s}
+.sw.on{background:var(--green)} .sw.on::after{transform:translateX(17px)}
+
+/* ── hero / empty ────────────────────────────── */
+.hero{max-width:900px;margin:0 auto;padding:56px 40px 70px;text-align:center}
+.hero .mark{width:76px;height:76px;border-radius:20px;margin:0 auto 26px;display:grid;place-items:center;
+  background:linear-gradient(160deg,#F4F0FE,#EDE7FD);color:var(--purple);
+  outline:1px dashed #D9CFFA;outline-offset:5px}
+.hero .mark svg{width:31px;height:31px}
+.hero h1{font-size:33px;line-height:1.2;margin-bottom:14px}
+.hero p.lede{max-width:560px;margin:0 auto 28px;font-size:15.5px;color:var(--ink2);line-height:1.6}
+.hero .cta{display:flex;gap:12px;justify-content:center;margin-bottom:46px}
+.hero .cta .btn{padding:12px 22px;font-size:14px}
+
+.stagelabel{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink4);font-weight:700;margin-bottom:14px}
+.stagerow{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin-bottom:8px}
+.stagepill{display:inline-flex;align-items:center;gap:8px;padding:8px 15px;border-radius:999px;
+  background:#fff;border:1px solid var(--line);font-size:13px;font-weight:600;box-shadow:var(--sh);transition:.14s}
+.stagepill:hover{border-color:#D6D9E6;transform:translateY(-1px)}
+.stagepill .d{width:7px;height:7px;border-radius:50%}
+
+.tplwrap{max-width:1180px;margin:0 auto;padding:0 40px 70px;text-align:left}
+.tplwrap h3{font-size:17px;margin-bottom:5px}
+.tplwrap .sub{font-size:13.5px;color:var(--ink3);margin-bottom:20px}
+.tplgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+@media (max-width:900px){.tplgrid{grid-template-columns:1fr}}
+.tpl{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;text-align:left;
+  transition:.16s;display:flex;flex-direction:column;box-shadow:var(--sh)}
+.tpl:hover{border-color:#D6D9E6;box-shadow:var(--sh-lg);transform:translateY(-2px)}
+.tpl .ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;margin-bottom:18px}
+.tpl .ic svg{width:19px;height:19px}
+.tpl h4{font-size:15.5px;margin-bottom:8px;line-height:1.35}
+.tpl p{margin:0 0 20px;font-size:13.5px;color:var(--ink2);line-height:1.55}
+.tpl .foot{margin-top:auto;padding-top:15px;border-top:1px solid var(--line2);
+  display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink3)}
+.tpl .foot svg{width:14px;height:14px;color:var(--amber)}
+.tpl .foot b{color:var(--ink2);font-weight:600}
+
+/* ── topbar (workflow context) ───────────────── */
+.topbar{display:flex;align-items:center;gap:12px;padding:0 24px;height:66px;background:#fff;
+  border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.topbar .crumb{font-size:14px;color:var(--ink3);font-weight:600}
+.topbar .crumb b{color:var(--ink);font-weight:700}
+.topbar .right{margin-left:auto;display:flex;gap:9px;align-items:center}
+.tabs{display:flex;gap:2px;margin-left:22px}
+.tab{padding:8px 13px;font-size:13px;font-weight:600;color:var(--ink3);border-radius:9px}
+.tab:hover{color:var(--ink);background:#F5F6FB}
+.tab.on{color:var(--purple);background:var(--purple-w)}
+
+/* ── create form ─────────────────────────────── */
+.formwrap{max-width:600px;margin:0 auto;padding:54px 32px}
+.back{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;color:var(--ink3);margin-bottom:20px}
+.back:hover{color:var(--ink)}
+.formwrap h1{font-size:27px;margin-bottom:8px}
+.formwrap .lede{font-size:14.5px;color:var(--ink3);margin:0 0 34px}
+.field{margin-bottom:22px}
+.trigsel{position:relative}
+.trigbtn{width:100%;display:flex;align-items:center;gap:11px;padding:12px 14px;border:1px solid var(--line);
+  border-radius:11px;background:#fff;font-size:14.5px;text-align:left;box-shadow:var(--sh)}
+.trigbtn:hover{border-color:#D6D9E6}
+.trigbtn.open{border-color:var(--purple);box-shadow:0 0 0 3px var(--purple-w)}
+.trigbtn .cv{margin-left:auto;color:var(--ink3);transition:.16s}
+.trigbtn.open .cv{transform:rotate(180deg)}
+.trigmenu{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:50;background:#fff;
+  border:1px solid var(--line);border-radius:12px;box-shadow:var(--sh-lg);padding:6px;max-height:320px;overflow:auto}
+.trigopt{width:100%;display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:9px;text-align:left;font-size:14px}
+.trigopt:hover{background:#F5F6FB}
+.trigopt .stg{margin-left:auto;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px}
+.trigopt .tick{color:var(--purple);opacity:0}
+.trigopt.sel .tick{opacity:1}
+
+/* ── canvas builder ──────────────────────────── */
+.canvas{padding:48px 32px 160px;min-height:100%;
+  background-image:radial-gradient(circle at 1px 1px,#E4E6EF 1px,transparent 0);background-size:22px 22px}
+.flow{width:100%;max-width:800px;margin:0 auto;position:relative}
+.node{background:#fff;border:1px solid var(--line);border-radius:14px;padding:15px 16px;display:flex;gap:12px;
+  align-items:flex-start;box-shadow:var(--sh-md);transition:.14s;position:relative;text-align:left;width:100%}
+.node:hover{border-color:#D3D7E4;box-shadow:var(--sh-lg)}
+.node.sel{border-color:var(--purple);box-shadow:0 0 0 3px var(--purple-w),var(--sh-md)}
+.node .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:0 0 34px}
+.node .ic svg{width:17px;height:17px}
+.node .bd{flex:1;min-width:0}
+.node .kind{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:800;margin-bottom:2px}
+.node .ttl{font-size:14.5px;font-weight:700;letter-spacing:-.012em;overflow-wrap:break-word}
+.node .sub{font-size:13px;color:var(--ink3);margin-top:2px;line-height:1.45}
+.node .cfg{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.node .cfg span{background:#F4F5FA;border:1px solid var(--line2);border-radius:8px;padding:5px 9px;
+  font-size:11.5px;color:var(--ink);font-weight:600;display:block;max-width:100%;line-height:1.35}
+.node .cfg em{display:block;font-style:normal;font-weight:600;color:var(--ink4);font-size:10px;
+  letter-spacing:.04em;text-transform:uppercase;margin-bottom:1px}
+.node .del{position:absolute;top:9px;right:9px;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;
+  color:var(--ink4);opacity:0;transition:.13s}
+.node:hover .del{opacity:1}
+.node .del:hover{background:var(--red-w);color:var(--red)}
+.k-trigger{color:var(--amber)} .k-condition{color:var(--violet)} .k-action{color:var(--blue)} .k-timing{color:var(--ink3)}
+
+.stem{width:1px;height:22px;background:#D8DBE6;margin:0 auto}
+.plus{width:26px;height:26px;border-radius:50%;border:1px solid #D8DBE6;background:#fff;display:grid;place-items:center;
+  margin:0 auto;color:var(--ink3);transition:.14s}
+.plus:hover{border-color:var(--purple);color:var(--purple);background:var(--purple-w)}
+.slot{width:100%;padding:15px;border:1.5px dashed #D3D7E4;border-radius:13px;color:var(--ink3);
+  font-size:13.5px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px;transition:.14s;background:rgba(255,255,255,.55)}
+.slot:hover,.slot.open{border-color:var(--purple);color:var(--purple);background:var(--purple-w);border-style:solid}
+.ends{display:flex;align-items:center;justify-content:center;gap:7px;font-size:12px;color:var(--ink4);padding:9px 0}
+.ends svg{width:13px;height:13px}
+.endwf{display:flex;align-items:center;justify-content:center;gap:9px;font-size:13.5px;font-weight:700;color:var(--ink3);padding-top:6px}
+.endwf .bx{width:22px;height:22px;border-radius:6px;border:2px solid #D3D7E4}
+
+.fork{position:relative;padding-top:40px}
+.fork::before{content:'';position:absolute;top:0;left:50%;width:1px;height:24px;background:#D8DBE6}
+.fork::after{content:'';position:absolute;top:24px;left:25%;right:25%;height:1px;background:#D8DBE6}
+.cols{display:flex;gap:20px;align-items:stretch}
+.col{display:flex;flex-direction:column}
+.carryline{flex:1;min-height:16px;position:relative}
+.carryline::before{content:'';position:absolute;left:50%;top:0;bottom:0;width:1px;background:#D8DBE6}
+.col{flex:1 1 50%;min-width:0;position:relative}
+
+/* a branch that carries on is re-centred at full width, joined by an S-curve */
+.scurve{position:relative;height:58px}
+.scurve i{position:absolute;display:block;border-color:#D8DBE6;border-style:solid;border-width:0}
+.scurve.from-pass i:nth-child(1){left:calc(25% - 5px);top:0;width:calc(12.5% + 2.5px);height:29px;
+  border-left-width:1px;border-bottom-width:1px;border-bottom-left-radius:100% 100%}
+.scurve.from-pass i:nth-child(2){left:calc(37.5% - 2.5px);top:29px;width:calc(12.5% + 2.5px);height:29px;
+  border-top-width:1px;border-right-width:1px;border-top-right-radius:100% 100%}
+.scurve.from-fail i:nth-child(1){left:calc(62.5% + 2.5px);top:0;width:calc(12.5% + 2.5px);height:29px;
+  border-right-width:1px;border-bottom-width:1px;border-bottom-right-radius:100% 100%}
+.scurve.from-fail i:nth-child(2){left:50%;top:29px;width:calc(12.5% + 2.5px);height:29px;
+  border-top-width:1px;border-left-width:1px;border-top-left-radius:100% 100%}
+.cont{position:relative}
+.ends.carry{color:var(--purple);font-weight:600}
+.ends.carry svg{color:var(--purple)}
+
+/* step picker floats free of its column */
+.slotwrap{position:relative}
+.col::before{content:'';position:absolute;top:-16px;left:50%;width:1px;height:16px;background:#D8DBE6}
+.branchpill{display:block;margin:0 auto 12px;width:fit-content;padding:3px 12px;border-radius:999px;
+  font-size:11px;font-weight:800;letter-spacing:.06em}
+.bp-pass{background:var(--green-w);color:var(--green)}
+.bp-fail{background:var(--red-w);color:var(--red)}
+
+/* step picker */
+.picker{position:absolute;z-index:60;top:calc(100% + 10px);left:50%;transform:translateX(-50%);width:396px;
+  background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--sh-lg);
+  padding:10px;text-align:left;max-height:430px;overflow:auto}
+.picker .gt{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink4);font-weight:800;padding:8px 6px 6px}
+.pk{width:100%;display:flex;gap:12px;align-items:center;padding:9px 8px;border-radius:10px;text-align:left}
+.pk:hover{background:#F5F6FB}
+.pk .ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex:0 0 30px}
+.pk .ic svg{width:15px;height:15px}
+.pk .bd{flex:1;min-width:0}
+.pk .n{display:block;font-size:13.5px;font-weight:700;line-height:1.3}
+.pk .d{display:block;font-size:12.5px;color:var(--ink3);margin-top:2px;line-height:1.35}
+.pk .stg{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:6px;white-space:nowrap}
+
+/* inspector */
+.insp{position:fixed;top:97px;right:0;bottom:0;width:352px;background:#fff;border-left:1px solid var(--line);
+  box-shadow:-8px 0 26px rgba(23,26,46,.06);z-index:40;display:flex;flex-direction:column;transform:translateX(100%);transition:.2s}
+.insp.on{transform:none}
+.insp .h{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:flex-start}
+.insp .h .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:0 0 34px}
+.insp .h .ic svg{width:16px;height:16px}
+.insp .b{flex:1;overflow:auto;padding:20px}
+.insp .f{padding:14px 20px;border-top:1px solid var(--line);display:flex;gap:8px}
+.insp .fld{margin-bottom:18px}
+.insp .note{background:#F5F6FB;border-radius:10px;padding:12px 13px;font-size:12.5px;color:var(--ink2);line-height:1.55}
+
+/* ── tables / panels ─────────────────────────── */
+.page{max-width:1080px;margin:0 auto;padding:28px 32px 70px}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--sh)}
+.pad{padding:22px}
+.tbl{overflow:hidden;border-radius:16px}
+.tbl table{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink4);
+  font-weight:800;padding:12px 16px;background:#FAFBFD;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:14px 16px;border-bottom:1px solid var(--line2);font-size:13.5px}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr:hover{background:#FBFCFE}
+.kv{display:grid;grid-template-columns:200px 1fr;gap:0}
+.kv>div{padding:13px 0;border-bottom:1px solid var(--line2);font-size:13.5px}
+.kv>div:nth-child(2n+1){color:var(--ink3);font-size:12.5px;font-weight:600}
+.kv>div:nth-last-child(-n+2){border-bottom:0}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:17px 18px;box-shadow:var(--sh)}
+.stat .l{font-size:11.5px;color:var(--ink3);font-weight:600}
+.stat .v{font-size:27px;font-weight:750;letter-spacing:-.03em;margin-top:6px}
+.stat .d{font-size:11.5px;color:var(--ink4);margin-top:3px}
+.sechead{display:flex;align-items:baseline;gap:12px;margin:0 0 14px}
+.sechead h3{font-size:16px}
+.banner{display:flex;gap:12px;align-items:flex-start;padding:15px 17px;border-radius:13px;margin-bottom:18px;font-size:13.5px;line-height:1.55}
+.banner svg{flex:0 0 17px;width:17px;height:17px;margin-top:1px}
+.banner.info{background:var(--blue-w);color:#17439E;border:1px solid #D5E2FC}
+.banner.warn{background:var(--amber-w);color:#8A5300;border:1px solid #F6E2BE}
+.ver{display:flex;gap:14px;padding:17px 0;border-bottom:1px solid var(--line2)}
+.ver:last-child{border-bottom:0}
+.ver .b{width:28px;height:28px;border-radius:50%;background:#F1F2F7;color:var(--ink2);display:grid;place-items:center;
+  font-size:11px;font-weight:800;flex:0 0 28px}
+.ver.cur .b{background:var(--green);color:#fff}
+.ver .chg{margin-top:9px;background:#FAFBFD;border:1px solid var(--line2);border-radius:10px;padding:11px 13px;font-size:12.5px}
+.ver .chg .m{color:var(--red)} .ver .chg .p{color:var(--green)}
+.exc{display:flex;gap:14px;padding:16px;border:1px solid var(--line);border-radius:14px;margin-bottom:11px;background:#fff;align-items:center;box-shadow:var(--sh)}
+.exc .av{width:38px;height:38px;border-radius:50%;background:#F1F2F7;color:var(--ink2);display:grid;place-items:center;font-size:12.5px;font-weight:700;flex:0 0 38px}
+.exc .sev{width:3px;align-self:stretch;border-radius:3px;flex:0 0 3px}
+.sev.hi{background:var(--red)} .sev.md{background:var(--amber)} .sev.lo{background:var(--ink4)}
+
+.menu{position:absolute;z-index:90;min-width:224px;background:#fff;border:1px solid var(--line);
+  border-radius:13px;box-shadow:var(--sh-lg);padding:6px;font-size:13.5px}
+.menu button{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border-radius:9px;text-align:left}
+.menu button:hover{background:#F5F6FB}
+.menu button.dg{color:var(--red)} .menu button.dg:hover{background:var(--red-w)}
+.menu .sep{height:1px;background:var(--line2);margin:5px 4px}
+.menu svg{width:15px;height:15px;color:var(--ink3)}
+
+#toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(80px);z-index:120;
+  background:#0E1020;color:#fff;padding:12px 18px;border-radius:12px;font-size:13.5px;box-shadow:var(--sh-lg);
+  display:flex;align-items:center;gap:10px;opacity:0;transition:.22s;max-width:540px}
+#toast.on{transform:translateX(-50%);opacity:1}
+#toast svg{color:#7CE0B0}
+.scrim{position:fixed;inset:0;background:rgba(23,26,46,.42);z-index:110;display:grid;place-items:center;padding:24px}
+.modal{background:#fff;border-radius:18px;box-shadow:var(--sh-lg);max-width:470px;width:100%;padding:26px}
+.modal h3{font-size:18px;margin-bottom:10px}
+.modal p{font-size:13.5px;color:var(--ink2);margin:0 0 22px;line-height:1.6}
+.modal .ft{display:flex;gap:9px;justify-content:flex-end}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+
+<div class="pbar">
+  <b>STATES</b>
+  <button data-jump="list" class="on">1 · Workflows list</button>
+  <button data-jump="empty">2 · Empty state</button>
+  <button data-jump="create">3 · Create</button>
+  <button data-jump="blank">4 · Blank canvas</button>
+  <button data-jump="built">5 · Built canvas</button>
+  <button data-jump="runs">6 · Run history</button>
+  <button data-jump="versions">7 · Versions</button>
+  <button data-jump="settings">8 · Settings</button>
+  <button data-jump="queue">9 · Exception queue</button>
+  <span class="sp"></span>
+  <span style="color:#666E85">BrightHire · Screen · Workflows</span>
+</div>
+
+<div class="shell">
+  <aside class="side">
+    <div class="brand"><span class="m"><i></i></span><b>BrightHire</b></div>
+    <nav>
+      <a class="nv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5L12 4l8 6.5V20a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg>Dashboard</a>
+      <a class="nv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"/></svg>Candidates</a>
+      <a class="nv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.6"/><path d="M7 9.5h5M7 13h8"/></svg>Interviews</a>
+      <div class="grp">Automation</div>
+      <a class="nv on" data-jump="list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13.5h3.2l2.4-6 3 12 2.6-9 1.8 3H21"/></svg>Workflows</a>
+      <a class="nv" data-jump="queue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l1.9 4.6 4.6 1.9-4.6 1.9L12 16.5l-1.9-4.6L5.5 10l4.6-1.9z"/><path d="M18.5 16.5l.8 1.9 1.9.8-1.9.8-.8 1.9-.8-1.9-1.9-.8 1.9-.8z"/></svg>Integrity</a>
+      <div class="grp">Workspace</div>
+      <a class="nv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17.5l-5.4 2.9 1-6.1L3.2 10l6.1-.9z"/></svg>Reports</a>
+      <a class="nv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v5l3.5 2"/></svg>Settings</a>
+    </nav>
+    <div class="me"><span class="av">CB</span><div><b>Cami B.</b><span>Product Design</span></div></div>
+  </aside>
+  <main class="stage" id="stage"></main>
+</div>
+
+<div class="insp" id="insp"></div>
+<div id="toast"></div>
+<div id="modalHost"></div>
+
+<script>
+/* =====================================================================
+   BrightHire · Screen — Workflows prototype
+   Step library, triggers and pipeline stages drawn from
+   "Screen Workflow Strategy — Kickoff" (Notion).
+   In-memory state only.
+   ===================================================================== */
+
+const P = {
+  bolt:'<path d="M13 2L4.5 13.5H10L9 22l8.5-11.5H12z"/>',
+  branch:'<circle cx="7" cy="5.5" r="2.2"/><circle cx="7" cy="18.5" r="2.2"/><circle cx="17.5" cy="12" r="2.2"/><path d="M7 7.7v8.6M9.2 5.5c3 0 3 6.5 6.3 6.5M9.2 18.5c3 0 3-6.5 6.3-6.5"/>',
+  fwd:'<path d="M5 12h13M13 6.5l5.5 5.5L13 17.5"/>',
+  play:'<path d="M7 4.5l12 7.5-12 7.5z"/>',
+  sync:'<path d="M20 11a8 8 0 0 0-14-4.5L4 9"/><path d="M4 13a8 8 0 0 0 14 4.5L20 15"/><path d="M4 5v4h4M20 19v-4h-4"/>',
+  bell:'<path d="M18 15.5V10a6 6 0 1 0-12 0v5.5L4 18.5h16z"/><path d="M10 21.5h4"/>',
+  mail:'<rect x="3" y="5.5" width="18" height="13" rx="2.4"/><path d="M3.5 8l8.5 5.5L20.5 8"/>',
+  flag:'<path d="M5.5 21V4h9l-1 3h6v9h-8l-1-3h-5"/>',
+  clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v5l3.5 2"/>',
+  cal:'<rect x="3.5" y="5.5" width="17" height="15" rx="2.4"/><path d="M3.5 10h17M8.5 3.5v4M15.5 3.5v4"/>',
+  shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',
+  id:'<rect x="3" y="5" width="18" height="14" rx="2.4"/><circle cx="9" cy="11" r="2.2"/><path d="M5.5 16.5c0-1.8 1.6-2.8 3.5-2.8s3.5 1 3.5 2.8M15 10h4M15 14h3"/>',
+  chat:'<path d="M4 5.5h16v11H9l-5 4.2z"/>',
+  phone:'<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/>',
+  wa:'<path d="M21 12a9 9 0 1 1-4-7.5L21 3l-1.2 4.2A9 9 0 0 1 21 12z"/><path d="M8.5 9.5c0 3 2 5 5 5"/>',
+  test:'<path d="M9 3h6M10 3v6.5L5 19a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9.5V3"/>',
+  pause:'<path d="M9 5v14M15 5v14"/>',
+  up:'<path d="M12 20V5M6.5 10.5L12 5l5.5 5.5"/>',
+  star:'<path d="M12 3.5l2.7 5.7 6.3.9-4.5 4.4 1 6.2L12 17.8l-5.5 2.9 1-6.2L3 10.1l6.3-.9z"/>',
+  check:'<path d="M20 6.5L9 17.5 4 12.5"/>',
+  x:'<path d="M6 6l12 12M18 6L6 18"/>',
+  copy:'<rect x="9" y="9" width="11" height="11" rx="2.2"/><path d="M15 5.5H6.2A2.2 2.2 0 0 0 4 7.7V16"/>',
+  edit:'<path d="M4 20h4.2L20.5 7.7 16.3 3.5 4 15.8z"/>',
+  trash:'<path d="M4 7h16M9.5 7V4h5v3M6.5 7l1 13.5h9L17.5 7"/>',
+  hist:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v5l3.5 2"/>',
+  dots:'<circle cx="12" cy="5.5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="18.5" r="1.5"/>',
+  lock:'<rect x="5" y="11" width="14" height="9" rx="2.2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  exp:'<path d="M12 3v12M7.5 7.5L12 3l4.5 4.5M4 17v3.5h16V17"/>',
+  sq:'<rect x="4.5" y="4.5" width="15" height="15" rx="3"/>',
+  cv:'<path d="M6 9.5l6 6 6-6"/>',
+  ar:'<path d="M14 6l-6 6 6 6"/>',
+  down:'<path d="M12 5v13M6.5 12.5L12 18l5.5-5.5"/>',
+  scale:'<path d="M12 4v16M6 8l-3 6h6zM18 8l-3 6h6z"/><path d="M6 8h12"/>'
+};
+const ic=(k,w)=>'<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="'+(w||1.8)+'" stroke-linecap="round" stroke-linejoin="round">'+(P[k]||'')+'</svg>';
+
+/* pipeline stages — from the Kickoff "Product Vision" section */
+const STAGES={
+  qualification:{n:'Qualification', c:'#0E9F6E', bg:'var(--green-w)'},
+  engagement:   {n:'Engagement',    c:'#7A3FED', bg:'var(--violet-w)'},
+  interview:    {n:'Interview',     c:'#2563EB', bg:'var(--blue-w)'},
+  evaluation:   {n:'Evaluation',    c:'#6D45E8', bg:'var(--violet-w)'},
+  decision:     {n:'Decision Engine',c:'#5B35E0',bg:'var(--violet-w)'},
+  actions:      {n:'Workflow Actions',c:'#E08700',bg:'var(--amber-w)'},
+  review:       {n:'Human Review',  c:'#5C6379', bg:'#F1F2F7'}
+};
+const stageChip=k=>{const s=STAGES[k];return '<span class="stg" style="background:'+s.bg+';color:'+s.c+'">'+s.n+'</span>';};
+
+/* triggers — the events that anchor a workflow to a point in the pipeline */
+const TRIGGERS=[
+  {id:'applied',  n:'Application received',              stage:'qualification', d:'A candidate enters the funnel from the ATS, a campaign, a referral or an invite link.'},
+  {id:'invited',  n:'Candidate invited to Screen',        stage:'engagement',    d:'The event that starts this workflow'},
+  {id:'qualDone', n:'Knockout questions completed',        stage:'qualification', d:'Knockout or qualifying questions have been answered — by form, SMS or voice.'},
+  {id:'screenDone',n:'Screen interview completed',        stage:'interview',     d:'The AI interview finished. Scoring may still be running.'},
+  {id:'evalDone', n:'Evaluation + integrity check completed', stage:'evaluation',d:'Structured scores, hiring recommendation and integrity signals are all available.'},
+  {id:'noShow',   n:'Interview not completed within 24h', stage:'engagement',    d:'The candidate was invited but never started or never finished.'},
+  {id:'advanced', n:'Candidate marked Advanced',          stage:'decision',      d:'The decision engine or a recruiter moved the candidate forward.'},
+  {id:'held',     n:'Candidate marked Hold',              stage:'decision',      d:'A candidate was held for human review rather than advanced or rejected.'},
+  {id:'assessDone',n:'Assessment completed',              stage:'evaluation',    d:'A typing test, skills test or work sample came back.'}
+];
+const trig=id=>TRIGGERS.find(t=>t.id===id)||TRIGGERS[1];
+
+/* step library — conditions, actions, timing */
+const STEPS={
+  /* ── conditions ── */
+  qualified:{kind:'condition',stage:'qualification',pi:'branch',n:'Qualified?',d:'Branch on qualification outcome',
+    long:'Branches on the qualifying questions outcome',
+    cfg:[['Question set',['Standard eligibility','Work authorization only','Custom — Retail Ops']],
+         ['Treat incomplete as',['Fail','Pass','Send to exception queue']]]},
+  score:{kind:'condition',stage:'evaluation',pi:'scale',n:'Score ≥ threshold?',d:'Branch on interview score',
+    long:'Branches on the Screen interview score',
+    cfg:[['Threshold',['4.0','3.8','3.6','3.4','3.2','3.0']],
+         ['Near-miss band',['Send within 0.4 to exception queue','No band — hard cutoff']]]},
+  integrity:{kind:'condition',stage:'evaluation',pi:'shield',n:'Integrity risk?',d:'Branch on integrity analysis',
+    long:'Branches on the interview integrity signals',
+    cfg:[['Pass when risk is',['Low only','Low or Medium']],
+         ['Treat unanalysed as',['Fail','Pass']]]},
+  identity:{kind:'condition',stage:'evaluation',pi:'id',n:'Identity verified?',d:'Branch on identity verification',
+    long:'Branches on the identity verification result',
+    cfg:[['Pass when',['Verified','Verified or not required']]]},
+  recommendation:{kind:'condition',stage:'evaluation',pi:'star',n:'Recommendation?',d:'Branch on hiring recommendation',
+    long:'Branches on BrightHire’s hiring recommendation',
+    cfg:[['Pass on',['Strong yes or Yes','Strong yes only']]]},
+  responded:{kind:'condition',stage:'engagement',pi:'chat',n:'Candidate responded?',d:'Branch on engagement response',
+    long:'Branches on whether the candidate responded to outreach',
+    cfg:[['Wait for',['48 hours','24 hours','5 days']]]},
+
+  /* ── actions ── */
+  advance:{kind:'action',stage:'decision',pi:'fwd',n:'Advance candidate',d:'Move to the next stage',
+    long:'Candidate is advanced by the decision engine',
+    cfg:[['Move to',['Hiring manager interview','Onsite','Recruiter review','Offer']]]},
+  continueScreen:{kind:'action',stage:'interview',pi:'play',n:'Continue to Screen',d:'Candidate proceeds to the interview',
+    long:'Candidate proceeds to the interview',cfg:[]},
+  hold:{kind:'action',stage:'decision',pi:'pause',n:'Hold candidate',d:'Pause pending human review',
+    long:'Candidate is held rather than advanced or rejected',
+    cfg:[['Priority',['High','Normal','Low']]]},
+  escalate:{kind:'action',stage:'decision',pi:'up',n:'Escalate',d:'Route to a senior reviewer',
+    long:'Escalated out of the standard review path',
+    cfg:[['Route to',['TA Ops','Recruiting manager','Compliance']]]},
+  atsStatus:{kind:'action',stage:'actions',pi:'sync',n:'Update ATS status',d:'Sync outcome to the ATS',
+    long:'Writes the outcome back to the ATS',
+    cfg:[['ATS',['Greenhouse','Workday','Ashby','SmartRecruiters','Lever']],
+         ['Status',['Mirror the decision','Advanced','Unqualified','Withdrawn']]]},
+  atsWrite:{kind:'action',stage:'actions',pi:'exp',n:'Write evaluation to ATS',d:'Push scores, summary and integrity',
+    long:'Pushes the interview evidence into the ATS record',
+    cfg:[['Include',['Scores + summary + integrity','Scores only','Full transcript']]]},
+  notifyRecruiter:{kind:'action',stage:'actions',pi:'bell',n:'Notify recruiter',d:'Email + Slack alert',
+    long:'Email + Slack alert',cfg:[['Channel',['Email + Slack','Slack','Email']]]},
+  notifyHM:{kind:'action',stage:'actions',pi:'bell',n:'Notify hiring manager',d:'Email + Slack alert',
+    long:'Hands the candidate off to the hiring manager',
+    cfg:[['Channel',['Email + Slack','Email','Slack']],['Attach',['Summary + scores','Summary only']]]},
+  message:{kind:'action',stage:'engagement',pi:'mail',n:'Send candidate message',d:'Configurable messaging',
+    long:'Configurable messaging',
+    cfg:[['Channel',['Email','SMS','WhatsApp','Voice']],
+         ['Template',['Screen invitation','Reminder — 1st','Reminder — final','Next steps','Not moving forward']]]},
+  reject:{kind:'action',stage:'engagement',pi:'mail',n:'Send rejection message',d:'Configurable messaging',
+    long:'Configurable messaging',
+    cfg:[['Reason',['Did not meet minimum requirements','Failed qualification','Work authorization']],
+         ['Send',['After 24 hours','Immediately','Do not send']]]},
+  voice:{kind:'action',stage:'engagement',pi:'phone',n:'Place voice call',d:'AI voice outreach',
+    long:'AI voice outreach to the candidate',
+    cfg:[['Script',['Complete your interview','Invite to Screen','Qualifying questions']],
+         ['Window',['9am–6pm candidate local','Any time']]]},
+  scheduling:{kind:'action',stage:'actions',pi:'cal',n:'Generate scheduling link',d:'Hand off to the scheduling partner',
+    long:'Hands off to the scheduling partner',
+    cfg:[['Calendar',['Hiring manager pool','Recruiter','Interview panel']],['Expires',['7 days','3 days']]]},
+  assessment:{kind:'action',stage:'evaluation',pi:'test',n:'Trigger assessment',d:'Send the next evaluation step',
+    long:'Sends the next evaluation step',
+    cfg:[['Assessment',['Typing test','Skills test','Work sample']]]},
+  exception:{kind:'action',stage:'review',pi:'flag',n:'Add to exception queue',d:'Surface for recruiter review',
+    long:'Surface for recruiter review',
+    cfg:[['Queue',['Recruiter review','Integrity review','Compliance']],['Priority',['High','Normal']]]},
+
+  /* ── timing ── */
+  delay:{kind:'timing',stage:'actions',pi:'clock',n:'Delay',d:'Wait before continuing',
+    long:'Waits before continuing',cfg:[['Wait',['24 hours','1 hour','48 hours','3 days','5 days']]]}
+};
+const stepDef=id=>STEPS[id]||{kind:'action',stage:'actions',pi:'fwd',n:id,d:'',long:'',cfg:[]};
+const KINDTONE={trigger:['var(--amber-w)','var(--amber)'],condition:['var(--violet-w)','var(--violet)'],
+  action:['var(--blue-w)','var(--blue)'],timing:['#F1F2F7','var(--ink2)']};
+
+const PICKER_GROUPS=[
+  ['Conditions',['qualified','score','integrity','identity','recommendation','responded']],
+  ['Actions',['advance','continueScreen','hold','escalate','atsStatus','atsWrite','notifyRecruiter','notifyHM','message','reject','voice','scheduling','assessment','exception']],
+  ['Timing',['delay']]
+];
+
+/* helpers to build graph nodes */
+let uid=1;
+const N=(id,vals)=>{const d=stepDef(id);return {k:uid++,id:id,v:vals||d.cfg.map(c=>c[1][0]),
+  pass:d.kind==='condition'?[]:undefined, fail:d.kind==='condition'?[]:undefined};};
+const C=(id,vals,pass,fail)=>{const n=N(id,vals);n.pass=pass||[];n.fail=fail||[];return n;};
+
+/* ── templates ─────────────────────────────── */
+const TEMPLATES=[
+  {id:'t1',pi:'check',tone:'green',n:'Pre-interview qualification',
+   d:'Screen out unqualified candidates before the interview starts.',trigger:'invited',
+   build:()=>[ C('qualified',null,[N('continueScreen')],[N('reject'),N('atsStatus',['Greenhouse','Unqualified'])]) ]},
+
+  {id:'t2',pi:'branch',tone:'violet',n:'Post-interview decision routing',
+   d:'Auto-advance high-confidence candidates and flag the rest for review.',trigger:'evalDone',
+   build:()=>[ C('integrity',null,
+        [ C('score',['3.6','Send within 0.4 to exception queue'],
+            [N('advance'),N('atsStatus'),N('notifyHM'),N('scheduling')],
+            [N('exception',['Recruiter review','Normal']),N('notifyRecruiter')]) ],
+        [N('hold',['High']),N('exception',['Integrity review','High']),N('notifyRecruiter')]) ]},
+
+  {id:'t3',pi:'bell',tone:'amber',n:'Interview no-show follow-up',
+   d:'Re-engage candidates who never completed their scheduled interview.',trigger:'noShow',
+   build:()=>[ N('message',['SMS','Reminder — 1st']), N('delay',['24 hours']),
+               N('message',['Email','Reminder — final']), N('delay',['48 hours']), N('voice'),
+               C('responded',null,[N('continueScreen')],
+                 [N('atsStatus',['Greenhouse','Withdrawn']),N('notifyRecruiter')]) ]},
+
+  {id:'t4',pi:'cal',tone:'blue',n:'Offer stage handoff',
+   d:'Notify the hiring manager and update the ATS the moment a candidate is advanced.',trigger:'advanced',
+   build:()=>[ N('notifyHM'), N('atsWrite'), N('scheduling') ]},
+
+  {id:'t5',pi:'shield',tone:'red',n:'Integrity exception routing',
+   d:'Send flagged interviews to a dedicated reviewer queue instead of a flat completed list.',trigger:'evalDone',
+   build:()=>[ C('identity',null,
+        [ C('integrity',null,[N('atsWrite')],[N('hold'),N('exception',['Integrity review','High'])]) ],
+        [N('hold',['High']),N('escalate',['Compliance']),N('exception',['Integrity review','High'])]) ]},
+
+  {id:'t6',pi:'chat',tone:'violet',n:'Multi-channel outreach',
+   d:'Reach candidates on email, SMS, WhatsApp and voice until one of them lands.',trigger:'invited',
+   build:()=>[ N('message',['Email','Screen invitation']), N('delay',['24 hours']),
+               N('message',['SMS','Reminder — 1st']), N('delay',['48 hours']),
+               N('message',['WhatsApp','Reminder — final']), N('delay',['24 hours']), N('voice') ]}
+];
+const TONE={green:['var(--green-w)','var(--green)'],violet:['var(--violet-w)','var(--violet)'],
+  amber:['var(--amber-w)','var(--amber)'],blue:['var(--blue-w)','var(--blue)'],red:['var(--red-w)','var(--red)']};
+
+/* ── seed workflows ────────────────────────── */
+function seedWorkflows(){
+  return [
+    {id:101,n:'Standard Screen Progression',status:'Active',trigger:'screenDone',
+     scope:'42 jobs · Sales & Support',runs:1204,auto:89,ok:98.7,owner:'Hazy',when:'2 days ago',locked:true,
+     steps:TEMPLATES[1].build()},
+
+    {id:102,n:'Technical Role Qualification',status:'Active',trigger:'qualDone',
+     scope:'18 jobs · Engineering',runs:342,auto:76,ok:99.4,owner:'Ganz',when:'5 days ago',locked:false,
+     steps:[ C('qualified',null,[N('continueScreen')],[N('hold',['Normal']),N('reject'),N('exception',['Recruiter review','Normal'])]) ]},
+
+    {id:103,n:'Executive Search — Manual Review',status:'Draft',trigger:'screenDone',
+     scope:'Not scoped yet',runs:0,auto:null,ok:null,owner:'Cami',when:'Today',locked:false,
+     steps:[ C('score',['4.0','No band — hard cutoff'],
+        [N('hold',['Normal']),N('exception',['Recruiter review','Normal'])],
+        [N('hold',['Low']),N('exception',['Recruiter review','Normal'])]) ]},
+
+    {id:104,n:'High-Volume Retail Screening',status:'Active',trigger:'applied',
+     scope:'118 jobs · Retail Ops',runs:3890,auto:94,ok:99.1,owner:'Hazy',when:'1 week ago',locked:true,
+     steps:[ C('qualified',null,
+        [N('message',['SMS','Screen invitation']),N('continueScreen'),N('advance',['Recruiter review'])],
+        [N('reject'),N('atsStatus',['Greenhouse','Unqualified'])]) ]},
+
+    {id:105,n:'Contract-to-Hire Pipeline',status:'Paused',trigger:'screenDone',
+     scope:'26 jobs · Contract',runs:128,auto:81,ok:97.6,owner:'Ganz',when:'3 weeks ago',locked:false,
+     steps:[ C('qualified',null,
+        [ C('score',['3.4','Send within 0.4 to exception queue'],
+            [N('advance'),N('atsStatus'),N('notifyHM')],
+            [N('exception',['Recruiter review','Normal']),N('notifyRecruiter')]) ],
+        [N('reject')]) ]}
+  ];
+}
+
+/* which pipeline segments a workflow touches — derived from its trigger and steps */
+const PIPE=['Qualify','Interview','Decision','ATS'];
+const STAGE2PIPE={qualification:'Qualify',engagement:'Interview',interview:'Interview',
+  evaluation:'Decision',decision:'Decision',actions:'ATS',review:null};
+function pipeOf(w){
+  const on=new Set();
+  const add=st=>{const p=STAGE2PIPE[st];if(p)on.add(p);};
+  add(trig(w.trigger).stage);
+  (function walk(chain){(chain||[]).forEach(n=>{const d=stepDef(n.id);add(d.stage);
+    if(d.kind==='condition'){walk(n.pass);walk(n.fail);}});})(w.steps);
+  return on;
+}
+
+const RUNS=[
+  {t:'11:42',c:'Marcus Whitfield',j:'Contact Center Agent',path:'Integrity pass → Score pass',r:'Advanced',s:'ok',a:'ATS updated · HM notified · scheduling link sent'},
+  {t:'11:39',c:'Yolanda Prieto',j:'Store Associate',path:'Integrity pass → Score pass',r:'Advanced',s:'ok',a:'ATS updated · HM notified · scheduling link sent'},
+  {t:'11:31',c:'Devon Achebe',j:'Clinical RN',path:'Integrity fail',r:'Held',s:'hold',a:'Exception queue (High) · recruiter notified'},
+  {t:'11:28',c:'Sanne de Vries',j:'SDR',path:'Integrity pass → Score fail',r:'Exception',s:'warn',a:'Near-miss band 3.4 · exception queue'},
+  {t:'11:14',c:'Iker Mendoza',j:'Warehouse Ops',path:'Integrity pass → Score pass',r:'Advanced',s:'ok',a:'ATS updated · HM notified · scheduling link sent'},
+  {t:'11:02',c:'Grace Oyelaran',j:'Contact Center Agent',path:'Integrity pass → Score pass',r:'Error',s:'err',a:'Greenhouse 429 · retried 3× · routed to exception queue'},
+  {t:'10:57',c:'Tobias Lindqvist',j:'Store Associate',path:'Integrity fail',r:'Held',s:'hold',a:'Exception queue (High) · integrity review'},
+  {t:'10:41',c:'Amara Nwosu',j:'Clinical RN',path:'Integrity pass → Score pass',r:'Advanced',s:'ok',a:'ATS updated · HM notified · scheduling link sent'}
+];
+const VERSIONS=[
+  {v:4,cur:true,who:'Priya Raman',when:'6 Aug 2026 · 4:12 PM',note:'Raised the score threshold after the Q2 pass-rate review.',
+   chg:[['-','Score ≥ threshold?  ·  3.4'],['+','Score ≥ threshold?  ·  3.6']]},
+  {v:3,who:'Diego Alarcón',when:'22 Jul 2026 · 9:38 AM',note:'Added the integrity gate ahead of the score check.',
+   chg:[['+','Integrity risk?  ·  Low only'],['+','Fail branch → Hold candidate, Add to exception queue']]},
+  {v:2,who:'Priya Raman',when:'9 Jul 2026 · 2:04 PM',note:'Promoted out of test mode for Sales & Support.',
+   chg:[['-','Run mode: Test'],['+','Run mode: Live · cap 250/day']]},
+  {v:1,who:'Cami M.',when:'30 Jun 2026 · 11:20 AM',note:'Created from the “Post-interview decision routing” template.',chg:[]}
+];
+const EXCEPTIONS=[
+  {sev:'hi',n:'Devon Achebe',j:'Clinical RN · Atlanta',why:'Integrity risk <b>High</b> — possible AI assistance on 3 answers, identity unverified',by:'Integrity exception routing',age:'18 min ago'},
+  {sev:'hi',n:'Tobias Lindqvist',j:'Store Associate · Malmö',why:'Face mismatch between the ID check and the interview · integrity risk <b>Medium</b>',by:'Integrity exception routing',age:'1 hour ago'},
+  {sev:'md',n:'Sanne de Vries',j:'SDR · Amsterdam',why:'Score <b>3.4</b> falls inside the near-miss band (3.2–3.6) · recommendation <b>Borderline</b>',by:'Screen candidate progression',age:'2 hours ago'},
+  {sev:'md',n:'Grace Oyelaran',j:'Contact Center Agent · Lagos',why:'ATS write failed after 3 retries — advanced in Screen but not in Greenhouse',by:'Screen candidate progression',age:'3 hours ago'},
+  {sev:'lo',n:'Priya Balakrishnan',j:'Warehouse Ops · Dallas',why:'Qualification answer conflicts with the ATS <i>Work authorization</i> field',by:'Pre-interview qualification',age:'yesterday'}
+];
+
+/* ── state ─────────────────────────────────── */
+let S={view:'empty',workflows:[],seeded:false,wfId:null,tab:'builder',filter:'All',q:'',
+       draft:{n:'',trigger:'invited'},trigOpen:false,pickerPath:null,selPath:null,dirty:false};
+
+const $=s=>document.querySelector(s);
+const $$=s=>Array.from(document.querySelectorAll(s));
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const wf=()=>S.workflows.find(w=>w.id===S.wfId);
+function toast(m){const t=$('#toast');t.innerHTML=ic('check',2.4)+'<span>'+m+'</span>';
+  t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),2800);}
+function ensureSeed(){if(!S.seeded){S.workflows=seedWorkflows();S.seeded=true;}}
+
+/* path helpers: "0", "1.pass.0", "1.fail.2" */
+/* paths look like "2" or "2.pass.0" or "2.pass.0.fail.1" —
+   an index, then (branch, index) pairs. */
+function chainAt(path){
+  let arr=wf()?wf().steps:S.newSteps;
+  if(!path) return arr;
+  const parts=path.split('.');
+  let node=arr[+parts[0]];
+  for(let k=1;k<parts.length;k+=2){
+    arr=node[parts[k]];
+    if(parts[k+1]!==undefined) node=arr[+parts[k+1]];
+  }
+  return arr;
+}
+function nodeAt(path){
+  const parts=path.split('.');
+  let arr=wf()?wf().steps:S.newSteps, node=arr[+parts[0]];
+  for(let k=1;k<parts.length;k+=2){
+    arr=node[parts[k]];
+    node=arr[+parts[k+1]];
+  }
+  return node;
+}
+
+function go(v,opts){
+  opts=opts||{};
+  if(['list','runs','versions','settings','queue','built'].includes(v)) ensureSeed();
+  S.selPath=null;S.pickerPath=null;S.trigOpen=false;
+  if(opts.wfId!==undefined) S.wfId=opts.wfId;
+  if(opts.tab) S.tab=opts.tab;
+  S.view=v;
+  render();
+  $('#stage').scrollTop=0;
+}
+
+/* ── prototype jumps ───────────────────────── */
+function jump(k){
+  if(k==='empty'){S.workflows=[];S.seeded=false;S.wfId=null;go('empty');}
+  else if(k==='list'){ensureSeed();S.wfId=null;go('list');}
+  else if(k==='create'){ensureSeed();S.draft={n:'',trigger:'invited'};S.newSteps=[];S.wfId=null;go('create');}
+  else if(k==='blank'){ensureSeed();S.newSteps=[];S.draft={n:'New workflow',trigger:'invited'};S.wfId=null;go('builder');}
+  else if(k==='built'){ensureSeed();S.wfId=101;go('builder',{tab:'builder'});}
+  else if(k==='runs'){ensureSeed();S.wfId=101;go('builder',{tab:'runs'});}
+  else if(k==='versions'){ensureSeed();S.wfId=101;go('builder',{tab:'versions'});}
+  else if(k==='settings'){ensureSeed();S.wfId=101;go('builder',{tab:'settings'});}
+  else if(k==='queue'){ensureSeed();S.wfId=null;go('queue');}
+  $$('.pbar button').forEach(b=>b.classList.toggle('on',b.dataset.jump===k));
+}
+
+/* ── workflows index ───────────────────────── */
+function listHTML(){
+  const q=S.q||'', f=S.filter||'All';
+  const all=S.workflows;
+  const counts={All:all.length,Active:0,Test:0,Draft:0,Paused:0};
+  all.forEach(w=>{if(counts[w.status]!==undefined)counts[w.status]++;});
+  const rows=all.filter(w=>(f==='All'||w.status===f)&&
+    (!q||w.n.toLowerCase().includes(q.toLowerCase())||trig(w.trigger).n.toLowerCase().includes(q.toLowerCase())));
+
+  const processed=all.reduce((s,w)=>s+w.runs,0);
+  const weighted=all.reduce((s,w)=>s+(w.auto?w.runs*w.auto:0),0);
+  const autoPct=processed?Math.round(weighted/processed):0;
+  const queued=218;
+
+  return '<div class="idx">'+
+    '<div class="hd"><div><h1>Workflows</h1>'+
+      '<p>Automate qualification, progression, and decision routing across Screen — so your team manages exceptions, not every candidate.</p></div>'+
+      '<button class="btn btn-p" data-act="new">'+
+        ic('bolt',0).replace(P.bolt,'<path d="M12 5v14M5 12h14"/>')+'Create workflow</button></div>'+
+
+    '<div class="kpis">'+
+      '<div class="kpi"><div class="l">Active workflows</div><div class="v">'+counts.Active+'</div></div>'+
+      '<div class="kpi"><div class="l">Candidates processed (30d)</div><div class="v">'+processed.toLocaleString()+'</div></div>'+
+      '<div class="kpi"><div class="l">Auto-advanced</div><div class="v">'+autoPct+'<small>%</small></div></div>'+
+      '<div class="kpi"><div class="l">In exception queue</div><div class="v">'+queued+'</div></div>'+
+    '</div>'+
+
+    '<div class="alert"><span class="rd">'+ic('flag',2)+'</span>'+
+      '<div><b>'+queued+' candidates need your review</b>'+
+      '<span>Held by the decision engine across '+Math.max(1,counts.Active+1)+' workflows — mostly borderline scores and integrity risk.</span></div>'+
+      '<a data-go="queue">Review queue '+ic('fwd',2.2)+'</a></div>'+
+
+    '<div class="filters"><div class="segs">'+
+      ['All','Active','Test','Draft','Paused'].filter(k=>k==='All'||counts[k]>0||f===k).map(k=>
+        '<button class="'+(f===k?'on':'')+'" data-filter="'+k+'">'+(k==='Test'?'Test mode':k)+' · '+counts[k]+'</button>').join('')+
+      '</div>'+
+      '<div class="srch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg>'+
+      '<input id="wfq" placeholder="Search workflows" value="'+esc(q)+'"></div></div>'+
+
+    '<div class="thead"><span>Workflow</span><span>Pipeline</span><span>Status</span>'+
+      '<span>Candidates (30d)</span><span>Last edited</span><span></span></div>'+
+
+    (rows.length? rows.map(w=>{
+      const on=pipeOf(w);
+      const cls={Active:'c-live',Draft:'c-draft',Paused:'c-paused',Test:'c-test'}[w.status]||'c-draft';
+      return '<div class="wrow" data-open="'+w.id+'">'+
+        '<div class="nm"><span class="sq">'+ic('branch',1.9)+'</span>'+
+          '<span style="min-width:0"><b>'+esc(w.n)+'</b>'+
+          '<span>Trigger: '+esc(trig(w.trigger).n)+'</span></span></div>'+
+        '<div class="pipe">'+PIPE.map((p,i)=>
+          (i?'<span class="sep">›</span>':'')+'<span class="pc '+(on.has(p)?'a':'')+'">'+p+'</span>').join('')+'</div>'+
+        '<div><span class="chip '+cls+'"><span class="d"></span>'+(w.status==='Test'?'Test mode':w.status)+'</span></div>'+
+        '<div class="num">'+(w.runs?w.runs.toLocaleString():'—')+
+          '<span>'+(w.runs?w.auto+'% auto-advanced':'Not yet published')+'</span></div>'+
+        '<div class="ed">'+esc(w.when)+'<span>'+esc(w.owner)+'</span></div>'+
+        '<button class="kb" data-menu="'+w.id+'">'+ic('dots',2)+'</button>'+
+      '</div>';}).join('')
+      : '<div class="emptyrows">No workflows match that filter.</div>')+
+  '</div>';
+}
+
+/* ── hero / empty stage ────────────────────── */
+function heroHTML(){
+  return '<div class="idx" style="padding-bottom:0"><div class="hd"><div><h1>Workflows</h1>'+
+    '<p>Automate qualification, progression, and decision routing across Screen — so your team manages exceptions, not every candidate.</p></div>'+
+    '<button class="btn btn-p" data-act="new">'+ic('bolt',0).replace(P.bolt,'<path d="M12 5v14M5 12h14"/>')+'Create workflow</button></div></div>'+
+  '<div class="hero">'+
+    '<div class="mark">'+ic('branch',1.7)+'</div>'+
+    '<h1>Automate what happens around Screen</h1>'+
+    '<p class="lede">Workflows handle everything before and after a Screen interview — qualification, engagement, decisions, and follow-up actions.</p>'+
+    '<div class="cta">'+
+      '<button class="btn btn-p" data-act="new">'+ic('bolt',0)+'Start from scratch</button>'+
+      '<button class="btn btn-s" data-act="scroll">Browse templates</button>'+
+    '</div>'+
+    '<div class="stagelabel">A workflow can attach to any point in the Screen pipeline</div>'+
+    '<div class="stagerow">'+Object.keys(STAGES).filter(k=>k!=='review').map(k=>
+      '<span class="stagepill"><span class="d" style="background:'+STAGES[k].c+'"></span>'+STAGES[k].n+'</span>').join('')+
+    '</div></div>'+
+  '<div class="tplwrap" id="tplwrap">'+
+    '<h3>Start from a template</h3>'+
+    '<div class="sub">Each template comes pre-attached to a trigger — you can change it before creating.</div>'+
+    '<div class="tplgrid">'+TEMPLATES.map(t=>{
+      const [bg,fg]=TONE[t.tone];
+      return '<button class="tpl" data-tpl="'+t.id+'">'+
+        '<div class="ic" style="background:'+bg+';color:'+fg+'">'+ic(t.pi,1.9)+'</div>'+
+        '<h4>'+esc(t.n)+'</h4><p>'+esc(t.d)+'</p>'+
+        '<div class="foot">'+ic('bolt',0)+'Runs when: <b>'+esc(trig(t.trigger).n)+'</b></div></button>';
+    }).join('')+'</div></div>';
+}
+
+/* ── create form ───────────────────────────── */
+function createHTML(){
+  const t=trig(S.draft.trigger);
+  return '<div class="topbar">'+
+    '<button class="btn btn-g btn-sm" data-act="cancel" style="padding:6px 8px">'+ic('ar',2.2)+'</button>'+
+    '<span class="crumb"><a data-act="cancel">Workflows</a> / <b>New workflow</b></span></div>'+
+  '<div class="formwrap">'+
+    '<button class="back" data-act="cancel">'+ic('ar',2.2)+'Back to list</button>'+
+    '<h1>Create workflow</h1>'+
+    '<p class="lede">Name it and choose where in the pipeline it runs.</p>'+
+    '<div class="field"><label class="fl">Workflow name</label>'+
+      '<input class="inp" id="wfName" placeholder="e.g. Pre-interview qualification" value="'+esc(S.draft.n)+'"></div>'+
+    '<div class="field"><label class="fl">Runs when <span>— sets its position in the pipeline</span></label>'+
+      '<div class="trigsel">'+
+        '<button class="trigbtn '+(S.trigOpen?'open':'')+'" data-act="trigtoggle">'+
+          '<span>'+esc(t.n)+'</span>'+stageChip(t.stage)+'<span class="cv">'+ic('cv',2)+'</span></button>'+
+        (S.trigOpen?'<div class="trigmenu">'+TRIGGERS.map(x=>
+          '<button class="trigopt '+(x.id===S.draft.trigger?'sel':'')+'" data-trig="'+x.id+'">'+
+          '<span class="tick">'+ic('check',2.6)+'</span><span>'+esc(x.n)+'</span>'+stageChip(x.stage)+'</button>').join('')+'</div>':'')+
+      '</div>'+
+      '<div class="tiny" style="margin-top:9px">'+esc(t.d)+'</div>'+
+    '</div>'+
+    '<button class="btn btn-p btn-w" style="padding:13px;margin-top:14px" data-act="create">Create workflow</button>'+
+  '</div>';
+}
+
+/* ── canvas ────────────────────────────────── */
+function nodeHTML(kind,piKey,kindLabel,title,sub,cfgChips,path,selectable){
+  const [bg,fg]=KINDTONE[kind];
+  return '<button class="node '+(S.selPath!==null&&S.selPath===path?'sel':'')+'" '+(selectable?'data-node="'+path+'"':'data-trigedit="1"')+'>'+
+    '<span class="ic" style="background:'+bg+';color:'+fg+'">'+ic(piKey,1.9)+'</span>'+
+    '<span class="bd"><span class="kind k-'+kind+'">'+kindLabel+'</span>'+
+    '<span class="ttl" style="display:block">'+esc(title)+'</span>'+
+    (sub?'<span class="sub" style="display:block">'+esc(sub)+'</span>':'')+
+    (cfgChips?'<span class="cfg">'+cfgChips+'</span>':'')+
+    '</span>'+
+    (selectable?'<span class="del" data-del="'+path+'">'+ic('x',2.2)+'</span>':'')+
+  '</button>';
+}
+
+const condIdx=ch=>(ch||[]).findIndex(n=>stepDef(n.id).kind==='condition');
+
+function renderChain(chain,base,depth,start){
+  start=start||0;
+  let h='';
+  chain.forEach((node,i)=>{
+    const idx=start+i;
+    const path=base?base+'.'+idx:''+idx;
+    const d=stepDef(node.id);
+    const chips=(node.v||[]).map((v,ci)=>v?('<span><em>'+esc((d.cfg[ci]||['',''])[0])+'</em>'+esc(v)+'</span>'):'').join('');
+    if(i>0||base) h+='<div class="stem"></div>';
+    if(!base&&idx===0) h+='<div class="stem"></div><button class="plus" data-slot="'+base+'#'+idx+'">'+
+      ic('bolt',0).replace(P.bolt,'<path d="M12 5v14M5 12h14"/>')+'</button><div class="stem"></div>';
+    h+=nodeHTML(d.kind,d.pi,d.kind.toUpperCase(),d.n,d.long||d.d,chips,path,true);
+
+    if(d.kind==='condition'){
+      const pi=condIdx(node.pass), fi=condIdx(node.fail);
+      const both=pi>=0&&fi>=0;
+
+      /* a branch column always shows its own actions at half width */
+      const col=br=>{
+        const chn=node[br]||[];
+        const ci=condIdx(chn);
+        const head=(both||ci<0)?chn:chn.slice(0,ci);
+        const terminal=(both||ci<0);
+        return '<div class="col"><span class="branchpill bp-'+br+'">'+br.toUpperCase()+'</span>'+
+          (head.length? renderChain(head,path+'.'+br,depth+1,0)+'<div class="stem"></div>' : '')+
+          slotHTML(path+'.'+br+'#'+head.length,'Add step')+
+          (terminal?'<div class="ends">'+ic('sq',2)+'Ends here</div>'
+                   :'<div class="ends carry">'+ic('down',2)+'Continues below</div><div class="carryline"></div>')+
+        '</div>';
+      };
+      h+='<div class="fork"><div class="cols">'+col('pass')+col('fail')+'</div></div>';
+
+      /* whichever branch carries on is re-centred at full width, joined by an S-curve */
+      if(!both&&(pi>=0||fi>=0)){
+        const br=pi>=0?'pass':'fail', ti=pi>=0?pi:fi;
+        const tail=(node[br]||[]).slice(ti);
+        const last=stepDef(tail[tail.length-1].id);
+        h+='<div class="scurve from-'+br+'"><i></i><i></i></div>'+
+           '<div class="cont">'+
+             renderChain(tail,path+'.'+br,depth+1,ti)+
+             '<div class="stem"></div>'+slotHTML(path+'.'+br+'#'+(ti+tail.length),'Add step')+
+             (last.kind==='condition'?'':'<div class="ends">'+ic('sq',2)+'Ends here</div>')+
+           '</div>';
+      }
+    }
+  });
+  return h;
+}
+
+function slotHTML(slotId,label){
+  const open=S.pickerPath===slotId;
+  return '<div class="slotwrap"><button class="slot '+(open?'open':'')+'" data-slot="'+slotId+'">'+
+    ic('bolt',0).replace(P.bolt,'<path d="M12 5v14M5 12h14"/>')+label+'</button>'+
+    (open?pickerHTML():'')+'</div>';
+}
+
+function pickerHTML(){
+  return '<div class="picker">'+PICKER_GROUPS.map(([g,ids])=>
+    '<div class="gt">'+g+'</div>'+ids.map(id=>{
+      const d=stepDef(id),[bg,fg]=KINDTONE[d.kind];
+      return '<button class="pk" data-add="'+id+'">'+
+        '<span class="ic" style="background:'+bg+';color:'+fg+'">'+ic(d.pi,1.9)+'</span>'+
+        '<span class="bd"><span class="n">'+esc(d.n)+'</span><span class="d">'+esc(d.d)+'</span></span>'+
+        stageChip(d.stage)+'</button>';
+    }).join('')).join('')+'</div>';
+}
+
+function canvasHTML(){
+  const w=wf();
+  const steps=w?w.steps:S.newSteps;
+  
+  const t=trig(w?w.trigger:S.draft.trigger);
+  let h='<div class="canvas"><div class="flow">';
+  h+=nodeHTML('trigger','bolt','TRIGGER',t.n,'The event that starts this workflow','',null,false);
+  if(steps.length){
+    h+=renderChain(steps,'',0);
+    h+='<div class="stem"></div>'+slotHTML('#'+steps.length,'Add step');
+    h+='<div class="stem"></div><div class="endwf"><span class="bx"></span>End of workflow</div>';
+  } else {
+    h+='<div class="stem"></div>'+slotHTML('#0','Add step');
+  }
+  h+='</div></div>';
+  return h;
+}
+
+/* ── inspector ─────────────────────────────── */
+function renderInspector(){
+  const el=$('#insp');
+  if(!S.selPath||S.view!=='builder'||S.tab!=='builder'){el.classList.remove('on');el.innerHTML='';return;}
+  const node=nodeAt(S.selPath),d=stepDef(node.id),[bg,fg]=KINDTONE[d.kind];
+  el.innerHTML='<div class="h"><span class="ic" style="background:'+bg+';color:'+fg+'">'+ic(d.pi,1.9)+'</span>'+
+    '<div style="flex:1"><div class="kind k-'+d.kind+'" style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:800">'+d.kind.toUpperCase()+'</div>'+
+    '<div style="font-size:15.5px;font-weight:700">'+esc(d.n)+'</div></div>'+
+    '<button class="btn btn-g btn-sm" data-act="closeinsp" style="padding:5px">'+ic('x',2.2)+'</button></div>'+
+  '<div class="b">'+
+    (d.cfg.length? d.cfg.map((c,i)=>
+      '<div class="fld"><label class="fl">'+esc(c[0])+'</label>'+
+      '<select class="inp inp-sm" data-cfg="'+i+'">'+c[1].map(o=>
+        '<option'+((node.v||[])[i]===o?' selected':'')+'>'+esc(o)+'</option>').join('')+'</select></div>').join('')
+      : '<div class="note">This step has nothing to configure — it simply lets the candidate continue.</div>')+
+    (d.kind==='condition'?'<div class="note" style="margin-top:4px">Anything that doesn’t reach a branch action falls through to the exception queue rather than being dropped.</div>':'')+
+  '</div>'+
+  '<div class="f"><button class="btn btn-s" style="flex:1" data-act="dupnode">'+ic('copy',1.9)+'Duplicate</button>'+
+  '<button class="btn btn-d" data-act="delnode">'+ic('trash',1.9)+'Delete step</button></div>';
+  el.classList.add('on');
+}
+
+/* ── workflow chrome ───────────────────────── */
+function wfTopbar(){
+  const w=wf();
+  const name=w?w.n:(S.draft.n||'Untitled workflow');
+  const status=w?w.status:'Draft';
+  const cls={Active:'c-live',Draft:'c-draft',Paused:'c-paused',Test:'c-test'}[status];
+  return '<div class="topbar">'+
+    '<button class="btn btn-g btn-sm" data-act="cancel" style="padding:6px 8px">'+ic('ar',2.2)+'</button>'+
+    '<span class="crumb"><a data-act="cancel">Workflows</a> / </span>'+
+    '<span style="font-size:16px;font-weight:700">'+esc(name)+'</span>'+
+    '<span class="chip '+cls+'"><span class="d"></span>'+(status==='Test'?'Test mode':status)+'</span>'+
+    '<div class="tabs">'+
+      ['builder|Builder','runs|Run history','versions|Versions','settings|Settings'].map(x=>{
+        const [k,l]=x.split('|');
+        return '<button class="tab '+(S.tab===k?'on':'')+'" data-tab="'+k+'">'+l+'</button>';}).join('')+
+    '</div>'+
+    '<div class="right">'+
+      (w?'<button class="kebab btn btn-g btn-sm" data-act="wfmenu" style="padding:7px">'+ic('dots',2)+'</button>':'')+
+      '<button class="btn btn-s" data-act="save">'+(S.dirty?'Save draft':'Save')+'</button>'+
+      '<button class="btn btn-p" data-act="publish">'+ic('check',2.4)+'Publish</button>'+
+    '</div></div>';
+}
+
+function runsHTML(){
+  const w=wf();
+  return '<div class="page">'+
+    '<div class="stats">'+
+      '<div class="stat"><div class="l">Candidates processed · 30d</div><div class="v">'+w.runs.toLocaleString()+'</div><div class="d">across all branches</div></div>'+
+      '<div class="stat"><div class="l">Auto-advanced</div><div class="v" style="color:var(--green)">'+Math.round(w.runs*.62).toLocaleString()+'</div><div class="d">62% of volume</div></div>'+
+      '<div class="stat"><div class="l">Routed to exception queue</div><div class="v" style="color:var(--amber)">'+Math.round(w.runs*.09)+'</div><div class="d">near-miss + integrity</div></div>'+
+      '<div class="stat"><div class="l">Errors</div><div class="v" style="color:var(--red)">'+(w.ok===null?'—':Math.round(w.runs*(100-w.ok)/100))+'</div><div class="d">all retried and requeued</div></div>'+
+    '</div>'+
+    '<div class="banner warn">'+ic('flag',2)+
+      '<div><b>1 run could not complete.</b> Greenhouse returned 429 for Grace Oyelaran. Screen retried three times, then routed her to the exception queue and alerted the recruiter — the candidate was never dropped.'+
+      '</div><button class="btn btn-s btn-sm" style="margin-left:auto">Retry</button></div>'+
+    '<div class="sechead"><h3>Recent runs</h3><span class="grow"></span>'+
+      '<select class="inp inp-sm" style="width:150px"><option>Today</option><option>Last 7 days</option><option>Last 30 days</option></select>'+
+      '<button class="btn btn-s btn-sm">'+ic('exp',1.9)+'Export CSV</button></div>'+
+    '<div class="card tbl"><table><thead><tr><th style="width:72px">Time</th><th>Candidate</th>'+
+      '<th style="width:220px">Path taken</th><th style="width:120px">Outcome</th><th>Actions run</th></tr></thead><tbody>'+
+      RUNS.map(r=>{const c={ok:'c-live',hold:'c-paused',warn:'c-paused',err:'c-draft'}[r.s];
+        return '<tr><td class="mono tiny">'+r.t+'</td>'+
+        '<td><div style="font-weight:600">'+esc(r.c)+'</div><div class="tiny">'+esc(r.j)+'</div></td>'+
+        '<td class="tiny mono" style="color:var(--ink2)">'+esc(r.path)+'</td>'+
+        '<td><span class="chip '+c+'">'+esc(r.r)+'</span></td>'+
+        '<td class="tiny" style="color:var(--ink2)">'+esc(r.a)+'</td></tr>';}).join('')+
+      '</tbody></table></div></div>';
+}
+
+function versionsHTML(){
+  return '<div class="page">'+
+    '<div class="banner info">'+ic('hist',2)+
+    '<div>Every publish creates a version. Compare, restore, and see exactly who changed which step — this is the audit trail TA Ops and Legal ask for before enabling automatic progression.</div></div>'+
+    '<div class="card pad">'+VERSIONS.map(v=>
+      '<div class="ver '+(v.cur?'cur':'')+'"><div class="b">'+(v.cur?'✓':v.v)+'</div>'+
+      '<div style="flex:1"><div class="row"><b style="font-size:14px">Version '+v.v+'</b>'+
+      (v.cur?'<span class="chip c-live"><span class="d"></span>Live</span>':'')+'<span class="grow"></span>'+
+      (v.cur?'':'<button class="btn btn-s btn-sm">Restore</button>')+
+      '<button class="btn btn-g btn-sm">Compare</button></div>'+
+      '<div class="tiny" style="margin-top:3px">'+esc(v.who)+' · '+esc(v.when)+'</div>'+
+      '<div style="font-size:13px;color:var(--ink2);margin-top:7px">'+esc(v.note)+'</div>'+
+      (v.chg.length?'<div class="chg">'+v.chg.map(c=>'<div class="'+(c[0]==='-'?'m':'p')+'">'+c[0]+'  '+esc(c[1])+'</div>').join('')+'</div>':'')+
+      '</div></div>').join('')+'</div></div>';
+}
+
+function settingsHTML(){
+  const w=wf();
+  return '<div class="page">'+
+    (w.locked?'<div class="banner info">'+ic('lock',2)+'<div><b>Locked by TA Ops.</b> Recruiters can view this workflow and its run history, and can override individual candidates, but only admins can change steps, thresholds or scope. Candidate-facing copy is locked separately by Legal.</div></div>':'')+
+    '<div class="card pad" style="margin-bottom:18px">'+
+      '<div class="sechead"><h3>Scope</h3></div>'+
+      '<div class="kv">'+
+        '<div>Applies to</div><div>'+esc(w.scope)+' <button class="btn btn-g btn-sm">Change</button></div>'+
+        '<div>Role family template</div><div>Inherits from <b>Support — high volume</b> · new jobs pick it up automatically</div>'+
+        '<div>Regions</div><div>United States, EMEA</div>'+
+        '<div>Priority</div><div>Runs 1st of '+S.workflows.length+' — first workflow to reach a decision wins</div>'+
+      '</div></div>'+
+    '<div class="card pad" style="margin-bottom:18px">'+
+      '<div class="sechead"><h3>Run mode &amp; guardrails</h3></div>'+
+      '<div class="kv">'+
+        '<div>Run mode</div><div><select class="inp inp-sm" style="width:230px"><option>Live — actions execute</option><option>Test mode — log only, nothing sent</option></select></div>'+
+        '<div>Daily action cap</div><div><select class="inp inp-sm" style="width:230px"><option>250 candidates / day</option><option>100 candidates / day</option><option>No cap</option></select></div>'+
+        '<div>Human approval</div><div><select class="inp inp-sm" style="width:300px"><option>Not required — first 25 approved on 9 Jul</option><option>Require approval for every candidate</option></select></div>'+
+        '<div>Candidate messaging</div><div><select class="inp inp-sm" style="width:300px"><option>Hold outside 9am–6pm candidate local</option><option>Send any time</option></select></div>'+
+        '<div>On action failure</div><div><select class="inp inp-sm" style="width:300px"><option>Retry 3×, then route to exception queue</option><option>Route to exception queue immediately</option></select></div>'+
+      '</div></div>'+
+    '<div class="card pad">'+
+      '<div class="sechead"><h3>Permissions</h3></div>'+
+      '<div class="tbl" style="border:1px solid var(--line);border-radius:12px;overflow:hidden">'+
+      '<table><thead><tr><th>Capability</th><th style="width:118px">TA Ops</th><th style="width:118px">Recruiter</th><th style="width:130px">Hiring manager</th></tr></thead><tbody>'+
+      [['View workflow and run history','Yes','Yes','Read-only'],
+       ['Pause / resume','Yes','No','No'],
+       ['Edit steps and thresholds','Yes','Locked','No'],
+       ['Edit candidate-facing copy','Yes','Locked by Legal','No'],
+       ['Edit scope','Yes','Own jobs only','No'],
+       ['Override an individual candidate','Yes','Yes','No'],
+       ['Restore a previous version','Yes','No','No']].map(r=>
+        '<tr><td>'+r[0]+'</td>'+r.slice(1).map(c=>
+        '<td><span class="chip '+(c==='Yes'?'c-live':(c.startsWith('No')?'c-draft':'c-paused'))+'">'+c+'</span></td>').join('')+'</tr>').join('')+
+      '</tbody></table></div>'+
+      '<div class="row" style="margin-top:16px"><span class="sw '+(w.locked?'on':'')+'" data-act="togglelock"></span>'+
+      '<span style="font-size:13.5px">Lock this workflow to TA Ops admins</span></div>'+
+    '</div></div>';
+}
+
+function queueHTML(){
+  return '<div class="topbar">'+
+    '<button class="btn btn-g btn-sm" data-act="cancel" style="padding:6px 8px">'+ic('ar',2.2)+'</button>'+
+    '<span class="crumb"><a data-act="cancel">Workflows</a> / <b>Exception queue</b></span>'+
+    '<div class="right"><button class="btn btn-s btn-sm">'+ic('exp',1.9)+'Export</button></div></div>'+
+    '<div class="page">'+
+    '<div class="banner info">'+ic('flag',2)+
+    '<div><b>Nothing here was rejected — a workflow reached a branch it wasn’t confident enough to resolve.</b> Highest severity first. Whatever you decide is written back to the ATS and logged against the workflow that routed it.</div></div>'+
+    '<div class="row" style="margin-bottom:16px">'+
+      '<div style="display:inline-flex;background:#EDEFF5;border-radius:10px;padding:3px">'+
+      '<button class="btn btn-sm" style="background:#fff;box-shadow:var(--sh)">Needs review · 37</button>'+
+      '<button class="btn btn-sm btn-g">Escalated · 6</button><button class="btn btn-sm btn-g">Resolved · 214</button></div>'+
+      '<span class="grow"></span>'+
+      '<select class="inp inp-sm" style="width:250px"><option>Routed by: all workflows</option><option>Integrity exception routing</option><option>Screen candidate progression</option></select>'+
+    '</div>'+
+    EXCEPTIONS.map(e=>'<div class="exc"><span class="sev '+e.sev+'"></span>'+
+      '<div class="av">'+e.n.split(' ').map(x=>x[0]).join('')+'</div>'+
+      '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:14.5px">'+esc(e.n)+
+      ' <span class="tiny" style="font-weight:400">· '+esc(e.j)+'</span></div>'+
+      '<div style="font-size:13px;color:var(--ink2);margin-top:3px">'+e.why+'</div>'+
+      '<div class="tiny" style="margin-top:5px">Routed by <b style="color:var(--ink2)">'+esc(e.by)+'</b> · '+esc(e.age)+'</div></div>'+
+      '<div class="row" style="gap:7px"><button class="btn btn-s btn-sm">Open interview</button>'+
+      '<button class="btn btn-s btn-sm">Escalate</button>'+
+      '<button class="btn btn-p btn-sm">Advance</button>'+
+      '<button class="btn btn-d btn-sm">Reject</button></div></div>').join('')+
+    '</div>';
+}
+
+/* ── render ────────────────────────────────── */
+function render(){
+  const st=$('#stage');
+  if(S.view==='list') st.innerHTML=listHTML();
+  else if(S.view==='empty') st.innerHTML=heroHTML();
+  else if(S.view==='create') st.innerHTML=createHTML();
+  else if(S.view==='queue') st.innerHTML=queueHTML();
+  else if(S.view==='builder'){
+    st.innerHTML=wfTopbar()+
+      (S.tab==='builder'?canvasHTML():S.tab==='runs'?(wf()?runsHTML():'<div class="page tiny">Publish this workflow to start collecting run history.</div>'):
+       S.tab==='versions'?versionsHTML():(wf()?settingsHTML():'<div class="page tiny">Publish this workflow to configure scope and guardrails.</div>'));
+  }
+  renderInspector();
+  closeMenu();
+}
+
+/* ── menus / modals ────────────────────────── */
+let menuEl=null;
+function closeMenu(){if(menuEl){menuEl.remove();menuEl=null;}}
+function openWfMenu(btn){
+  closeMenu();
+  const w=wf();
+  const m=document.createElement('div');m.className='menu';
+  m.innerHTML='<button data-m="rename">'+ic('edit',1.9)+'Rename</button>'+
+    '<button data-m="dup">'+ic('copy',1.9)+'Duplicate</button>'+
+    '<button data-m="test">'+ic('play',1.9)+'Run in test mode</button>'+
+    '<div class="sep"></div>'+
+    '<button data-m="runs">'+ic('hist',1.9)+'Run history</button>'+
+    '<button data-m="versions">'+ic('hist',1.9)+'Version history</button>'+
+    '<button data-m="up">'+ic('up',1.9)+'Move earlier in priority</button>'+
+    '<div class="sep"></div>'+
+    '<button data-m="lock">'+ic('lock',1.9)+(w.locked?'Unlock for recruiters':'Lock to TA Ops')+'</button>'+
+    '<button data-m="export">'+ic('exp',1.9)+'Export as JSON</button>'+
+    '<button data-m="pause">'+ic('pause',1.9)+(w.status==='Paused'?'Resume':'Pause')+'</button>'+
+    '<button class="dg" data-m="del">'+ic('trash',1.9)+'Delete workflow</button>';
+  document.body.appendChild(m);
+  const r=btn.getBoundingClientRect();
+  m.style.top=(r.bottom+7+window.scrollY)+'px';m.style.left=Math.max(10,r.right-224)+'px';
+  menuEl=m;
+}
+function modal(h){$('#modalHost').innerHTML='<div class="scrim"><div class="modal">'+h+'</div></div>';}
+function closeModal(){$('#modalHost').innerHTML='';}
+
+/* ── events ────────────────────────────────── */
+document.addEventListener('click',e=>{
+  const t=e.target;
+  if(menuEl&&!t.closest('.menu')&&!t.closest('[data-act="wfmenu"]')&&!t.closest('[data-menu]')) closeMenu();
+
+  const jb=t.closest('[data-jump]'); if(jb){jump(jb.dataset.jump);return;}
+  const fb=t.closest('[data-filter]'); if(fb){S.filter=fb.dataset.filter;render();return;}
+  const gb=t.closest('[data-go]'); if(gb){go(gb.dataset.go);return;}
+  const act=(t.closest('[data-act]')||{}).dataset;
+
+  /* trigger dropdown */
+  if(act&&act.act==='trigtoggle'){S.trigOpen=!S.trigOpen;render();return;}
+  const to=t.closest('[data-trig]');
+  if(to){S.draft.trigger=to.dataset.trig;S.trigOpen=false;render();return;}
+  if(S.trigOpen&&!t.closest('.trigsel')){S.trigOpen=false;render();return;}
+
+  /* templates + new */
+  const tp=t.closest('[data-tpl]');
+  if(tp){const tpl=TEMPLATES.find(x=>x.id===tp.dataset.tpl);
+    S.draft={n:tpl.n,trigger:tpl.trigger};S.newSteps=tpl.build();S.wfId=null;S.dirty=true;
+    go('builder',{tab:'builder'});toast('“'+tpl.n+'” loaded — edit any step before publishing');return;}
+  if(act&&act.act==='new'){S.draft={n:'',trigger:'invited'};S.newSteps=[];S.wfId=null;go('create');return;}
+  if(act&&act.act==='scroll'){document.getElementById('tplwrap').scrollIntoView({behavior:'smooth'});return;}
+  if(act&&act.act==='cancel'){S.wfId=null;go(S.workflows.length?'list':'empty');return;}
+  if(act&&act.act==='create'){
+    const nm=($('#wfName')||{}).value||'';
+    S.draft.n=nm||'Untitled workflow';S.newSteps=[];S.dirty=true;
+    go('builder',{tab:'builder'});return;}
+
+  /* row kebab must beat the row-open handler */
+  const kbBtn=t.closest('[data-menu]');
+  if(kbBtn){e.stopPropagation();S.wfId=+kbBtn.dataset.menu;openWfMenu(kbBtn);return;}
+
+  /* open a workflow */
+  const op=t.closest('[data-open]');
+  if(op){S.dirty=false;go('builder',{wfId:+op.dataset.open,tab:'builder'});return;}
+
+  /* tabs */
+  const tb=t.closest('[data-tab]');
+  if(tb){S.tab=tb.dataset.tab;S.selPath=null;render();return;}
+
+  /* canvas: delete node (before node-select) */
+  const dl=t.closest('[data-del]');
+  if(dl){e.stopPropagation();removeAt(dl.dataset.del);return;}
+
+  /* canvas: select node */
+  const nd=t.closest('[data-node]');
+  if(nd){S.selPath=(S.selPath===nd.dataset.node)?null:nd.dataset.node;S.pickerPath=null;render();return;}
+  if(t.closest('[data-trigedit]')){toast('The trigger is set when the workflow is created — change it in Settings');return;}
+
+  /* canvas: slot / picker */
+  const sl=t.closest('[data-slot]');
+  if(sl){S.pickerPath=(S.pickerPath===sl.dataset.slot)?null:sl.dataset.slot;S.selPath=null;render();return;}
+  const ad=t.closest('[data-add]');
+  if(ad){addStep(ad.dataset.add);return;}
+  if(S.pickerPath&&!t.closest('.picker')&&!t.closest('[data-slot]')){S.pickerPath=null;render();return;}
+
+  /* inspector */
+  if(act&&act.act==='closeinsp'){S.selPath=null;render();return;}
+  if(act&&act.act==='delnode'){removeAt(S.selPath);return;}
+  if(act&&act.act==='dupnode'){
+    const parts=S.selPath.split('.');const i=+parts[parts.length-1];
+    const base=parts.slice(0,-1).join('.');
+    const arr=base?chainAt(S.selPath.replace(/\.\d+$/,'')) : (wf()?wf().steps:S.newSteps);
+    const src=arr[i];const cp=JSON.parse(JSON.stringify(src));cp.k=uid++;
+    arr.splice(i+1,0,cp);S.selPath=null;S.dirty=true;render();toast('Step duplicated');return;}
+
+  /* header actions */
+  if(act&&act.act==='save'){S.dirty=false;toast('Draft saved');render();return;}
+  if(act&&act.act==='publish'){publish();return;}
+  if(act&&act.act==='wfmenu'){openWfMenu(t.closest('[data-act="wfmenu"]'));return;}
+  if(act&&act.act==='togglelock'){const w=wf();w.locked=!w.locked;render();
+    toast(w.locked?'Locked — recruiters now have read-only access':'Unlocked for recruiters');return;}
+
+  /* workflow menu */
+  const mi=t.closest('[data-m]');
+  if(mi){
+    const w=wf(),k=mi.dataset.m;closeMenu();
+    if(k==='dup'){const c=JSON.parse(JSON.stringify(w));c.id=Date.now();c.n=w.n+' (copy)';c.status='Draft';
+      c.runs=0;c.auto=null;c.ok=null;c.owner='Cami';c.when='just now';c.locked=false;
+      S.workflows.splice(S.workflows.indexOf(w)+1,0,c);S.wfId=c.id;render();toast('Duplicated as a draft');}
+    if(k==='test'){w.status='Test';render();toast('Now running in test mode — no ATS writes, no candidate messages');}
+    if(k==='pause'){w.status=w.status==='Paused'?'Active':'Paused';render();
+      toast(w.status==='Paused'?'Paused — no new candidates will enter this workflow':'Resumed');}
+    if(k==='lock'){w.locked=!w.locked;render();toast(w.locked?'Locked to TA Ops':'Unlocked for recruiters');}
+    if(k==='runs'){go('builder',{tab:'runs'});}
+    if(k==='versions'){go('builder',{tab:'versions'});}
+    if(k==='up'){const i=S.workflows.indexOf(w);if(i>0){S.workflows.splice(i-1,0,S.workflows.splice(i,1)[0]);render();toast('Moved earlier — it now evaluates first');}}
+    if(k==='export'){toast('Workflow exported as JSON');}
+    if(k==='rename'){modal('<h3>Rename workflow</h3><input class="inp" id="rn" value="'+esc(w.n)+'">'+
+      '<div class="ft" style="margin-top:20px"><button class="btn btn-s" data-mc>Cancel</button>'+
+      '<button class="btn btn-p" data-rn>Rename</button></div>');}
+    if(k==='del'){modal('<h3>Delete “'+esc(w.n)+'”?</h3><p>'+
+      (w.status==='Active'?'This workflow is live and has processed '+w.runs.toLocaleString()+' candidates in the last 30 days. Deleting it stops all automation on <i>'+esc(trig(w.trigger).n)+'</i> immediately. Candidates mid-flow finish their current step.'
+        :'It has never run, so nothing in flight is affected.')+
+      ' Run history and the audit trail are retained.</p>'+
+      '<div class="ft"><button class="btn btn-s" data-mc>Cancel</button>'+
+      (w.status==='Active'?'<button class="btn btn-s" data-mp>Pause instead</button>':'')+
+      '<button class="btn btn-d" data-md>Delete workflow</button></div>');}
+    return;
+  }
+  if(t.closest('[data-delnode]')){const pth=S.pendingDel;closeModal();S.pendingDel=null;doRemove(pth);return;}
+  if(t.closest('[data-mc]')) return closeModal();
+  if(t.closest('[data-rn]')){wf().n=($('#rn')||{}).value||wf().n;closeModal();render();toast('Renamed');return;}
+  if(t.closest('[data-mp]')){wf().status='Paused';closeModal();render();toast('Paused instead of deleted');return;}
+  if(t.closest('[data-md]')){const id=S.wfId;S.workflows=S.workflows.filter(x=>x.id!==id);closeModal();
+    S.wfId=null;go(S.workflows.length?'list':'empty');toast('Workflow deleted');return;}
+});
+
+document.addEventListener('change',e=>{
+  const c=e.target.closest('[data-cfg]');
+  if(c&&S.selPath){const node=nodeAt(S.selPath);node.v=node.v||[];node.v[+c.dataset.cfg]=e.target.value;
+    S.dirty=true;render();}
+});
+document.addEventListener('input',e=>{
+  if(e.target.id==='wfName'){S.draft.n=e.target.value;return;}
+  if(e.target.id==='wfq'){S.q=e.target.value;const pos=e.target.selectionStart;render();
+    const el=$('#wfq');if(el){el.focus();el.setSelectionRange(pos,pos);}}
+});
+
+/* ── graph mutation ────────────────────────── */
+function addStep(id){
+  const [base,idxStr]=S.pickerPath.split('#');
+  const arr=base?chainAt(base):(wf()?wf().steps:S.newSteps);
+  arr.splice(+idxStr,0,N(id));
+  S.pickerPath=null;S.dirty=true;render();
+  toast('“'+stepDef(id).n+'” added');
+}
+function doRemove(path){
+  const parts=path.split('.');
+  const i=+parts[parts.length-1];
+  const base=parts.slice(0,-1).join('.');
+  const arr=base?chainAt(base):(wf()?wf().steps:S.newSteps);
+  const d=stepDef(arr[i].id);
+  arr.splice(i,1);
+  S.selPath=null;S.dirty=true;render();
+  toast('“'+d.n+'” removed');
+}
+function removeAt(path){
+  const node=nodeAt(path),d=stepDef(node.id);
+  const n=(node.pass||[]).length+(node.fail||[]).length;
+  if(d.kind==='condition'&&n>0){
+    S.pendingDel=path;
+    modal('<h3>Remove “'+esc(d.n)+'”?</h3><p>This condition has <b>'+n+' step'+(n===1?'':'s')+'</b> across its pass and fail branches. Removing it deletes those steps too — candidates that used to take those paths will fall through to the exception queue instead.</p>'+
+      '<div class="ft"><button class="btn btn-s" data-mc>Keep it</button>'+
+      '<button class="btn btn-d" data-delnode>Remove condition and '+n+' step'+(n===1?'':'s')+'</button></div>');
+    return;
+  }
+  doRemove(path);
+}
+function publish(){
+  const steps=wf()?wf().steps:S.newSteps;
+  if(!steps.length){toast('Add at least one step before publishing');return;}
+  if(wf()){wf().status='Active';S.dirty=false;render();toast('“'+wf().n+'” published — version '+(VERSIONS.length+1));return;}
+  ensureSeed();
+  const w={id:Date.now(),n:S.draft.n||'Untitled workflow',status:'Test',trigger:S.draft.trigger,
+    scope:'Not scoped yet',runs:0,auto:null,ok:null,owner:'Cami',when:'just now',locked:false,steps:S.newSteps};
+  S.workflows.unshift(w);S.wfId=null;S.dirty=false;go('list');
+  toast('“'+w.n+'” published in test mode — it will log what it would have done without sending anything');
+}
+
+/* boot */
+ensureSeed();
+go('list');
+
+</script>
+</body>
+</html>
