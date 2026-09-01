@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Screen candidate progression — Workflow Builder</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --brand:#6E4CF5;
+    --brand-dark:#3E2C8F;
+    --brand-rail:#352971;
+    --ink:#181A22;
+    --gray-900:#20232E;
+    --gray-700:#454A57;
+    --gray-500:#7B8190;
+    --gray-300:#D6D9E1;
+    --gray-200:#E7E9F0;
+    --gray-100:#F2F3F7;
+    --bg:#F6F6FA;
+    --white:#ffffff;
+    --line:#D9DCE5;
+
+    --green:#0E9F6E;      --green-bg:#E1F7EE;
+    --amber:#C2760A;      --amber-bg:#FCF0D9;
+    --indigo:#4F46E5;     --indigo-bg:#E9E7FC;
+    --slate:#5B6270;      --slate-bg:#EEEFF3;
+    --red:#D0342C;        --red-bg:#FBE7E6;
+
+    --card-w: 356px;
+    --col-gap: 180px;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    overflow:hidden;
+  }
+
+  /* ---------- layout shell ---------- */
+  #app{ display:flex; height:100vh; width:100vw; }
+
+  /* ---------- left rail ---------- */
+  .rail{
+    width:72px; flex:0 0 72px;
+    background:linear-gradient(180deg, var(--brand-rail), #241a5c);
+    display:flex; flex-direction:column; align-items:center;
+    padding:18px 0 16px;
+  }
+  .rail-logo{
+    width:38px;height:38px;border-radius:11px;
+    background:var(--brand);
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:28px; flex:0 0 auto;
+  }
+  .rail-logo svg{width:20px;height:20px;}
+  .rail-icons{ display:flex; flex-direction:column; gap:22px; flex:1; align-items:center; }
+  .rail-icons .ri{
+    width:34px;height:34px;border-radius:9px;
+    display:flex;align-items:center;justify-content:center;
+    color:rgba(255,255,255,.62); cursor:pointer;
+  }
+  .rail-icons .ri svg{width:18px;height:18px;}
+  .rail-icons .ri:hover{ background:rgba(255,255,255,.1); color:#fff; }
+  .rail-icons .ri.active{ background:rgba(255,255,255,.16); color:#fff; }
+  .rail-bottom{ display:flex; flex-direction:column; align-items:center; gap:16px; }
+  .rail-avatar{
+    width:32px;height:32px;border-radius:50%;
+    background:#8E7CF5;
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:12px;font-weight:700;
+  }
+
+  /* ---------- main column ---------- */
+  .main{ flex:1; display:flex; flex-direction:column; min-width:0; }
+
+  .topbar{
+    height:64px; flex:0 0 64px;
+    background:var(--white);
+    border-bottom:1px solid var(--gray-200);
+    display:flex; align-items:center;
+    padding:0 28px;
+    gap:14px;
+  }
+  .crumb{ color:var(--gray-500); font-size:14px; }
+  .crumb-title{ color:var(--ink); font-size:15px; font-weight:650; }
+  .status-pill{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:12px; font-weight:600; color:var(--slate);
+    background:var(--slate-bg); padding:4px 10px 4px 8px; border-radius:999px;
+    margin-left:2px;
+  }
+  .status-dot{ width:6px;height:6px;border-radius:50%; background:var(--gray-500); }
+  .topbar-spacer{ flex:1; }
+  .btn{
+    font-size:13.5px; font-weight:600; border-radius:9px; cursor:pointer;
+    border:1px solid var(--gray-200); background:var(--white); color:var(--gray-700);
+    padding:8px 14px; display:inline-flex; align-items:center; gap:7px;
+  }
+  .btn:hover{ background:var(--gray-100); }
+  .btn-primary{
+    background:var(--brand); color:#fff; border-color:var(--brand);
+  }
+  .btn-primary:hover{ background:var(--brand-dark); }
+
+  /* ---------- canvas ---------- */
+  .canvas-wrap{ flex:1; overflow:auto; position:relative; }
+  .canvas{
+    position:relative;
+    width:1180px; margin:0 auto;
+    padding:48px 20px 140px;
+  }
+  #lines{ position:absolute; top:0; left:0; overflow:visible; pointer-events:none; }
+
+  .col-single{ width:var(--card-w); margin:0 auto; position:relative; z-index:1; }
+  .stem{ width:2px; height:30px; background:var(--line); margin:0 auto; }
+
+  .fork{
+    display:flex; justify-content:center; gap:var(--col-gap);
+    position:relative; z-index:1;
+  }
+  .fork > .branch{ width:var(--card-w); display:flex; flex-direction:column; align-items:center; }
+
+  .pill{
+    display:inline-flex; align-items:center; height:26px; padding:0 14px;
+    border-radius:999px; font-size:11.5px; font-weight:750; letter-spacing:.04em;
+    margin-bottom:22px;
+  }
+  .pill.green{ background:var(--green-bg); color:var(--green); }
+  .pill.red{ background:var(--red-bg); color:var(--red); }
+  .pill.amber{ background:var(--amber-bg); color:var(--amber); }
+
+  .end-marker{
+    display:flex; align-items:center; gap:8px; color:var(--gray-500);
+    font-size:12.5px; font-weight:600; margin-top:14px; margin-bottom:6px;
+    justify-content:center; width:var(--card-w); margin-left:auto; margin-right:auto;
+  }
+  .end-marker .box{ width:11px;height:11px;border:1.6px solid var(--gray-300); border-radius:3px; }
+
+  /* ---------- node card ---------- */
+  .node{
+    width:var(--card-w); min-height:96px;
+    background:var(--white); border:1px solid var(--gray-200); border-radius:14px;
+    padding:16px 18px 17px 16px;
+    display:flex; gap:12px; align-items:flex-start;
+    box-shadow:0 1px 2px rgba(20,20,30,.04);
+    cursor:pointer; transition:box-shadow .15s ease, border-color .15s ease, transform .1s ease;
+  }
+  .node:hover{ box-shadow:0 4px 16px rgba(30,20,80,.09); border-color:var(--gray-300); transform:translateY(-1px); }
+  .node.selected{ border-color:var(--brand); box-shadow:0 0 0 3px rgba(110,76,245,.14); }
+
+  .node-icon{
+    flex:0 0 34px; width:34px; height:34px; border-radius:9px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .node-icon svg{ width:17px; height:17px; }
+  .node-body{ flex:1; min-width:0; }
+  .node-top{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .node-cat{ font-size:10.5px; font-weight:750; letter-spacing:.05em; }
+  .node-affordance{ color:var(--gray-400,#B7BBC6); flex:0 0 auto; display:flex; }
+  .node-affordance svg{ width:14px; height:14px; }
+  .node-title{ font-size:14.5px; font-weight:650; color:var(--ink); margin:3px 0 4px; line-height:1.25; }
+  .node-desc{ font-size:12.5px; color:var(--gray-500); line-height:1.45; }
+
+  /* color variants */
+  .c-amber .node-icon{ background:var(--amber-bg); color:var(--amber); }
+  .c-amber .node-cat{ color:var(--amber); }
+  .c-green .node-icon{ background:var(--green-bg); color:var(--green); }
+  .c-green .node-cat{ color:var(--green); }
+  .c-indigo .node-icon{ background:var(--indigo-bg); color:var(--indigo); }
+  .c-indigo .node-cat{ color:var(--indigo); }
+  .c-slate .node-icon{ background:var(--slate-bg); color:var(--slate); }
+  .c-slate .node-cat{ color:var(--slate); }
+  .c-red .node-icon{ background:var(--red-bg); color:var(--red); }
+  .c-red .node-cat{ color:var(--red); }
+
+  /* ---------- drawer ---------- */
+  .scrim{
+    position:fixed; inset:0; background:rgba(20,18,40,.18);
+    opacity:0; pointer-events:none; transition:opacity .18s ease; z-index:20;
+  }
+  .scrim.show{ opacity:1; pointer-events:auto; }
+
+  .drawer{
+    position:fixed; top:0; right:0; height:100vh; width:400px;
+    background:var(--white); border-left:1px solid var(--gray-200);
+    box-shadow:-14px 0 40px rgba(20,10,60,.10);
+    transform:translateX(100%); transition:transform .22s cubic-bezier(.4,0,.2,1);
+    z-index:21; display:flex; flex-direction:column;
+  }
+  .drawer.open{ transform:translateX(0); }
+
+  .drawer-head{
+    display:flex; align-items:flex-start; gap:12px; padding:22px 20px 18px;
+    border-bottom:1px solid var(--gray-200);
+  }
+  .drawer-head .node-icon{ flex:0 0 36px; width:36px; height:36px; }
+  .drawer-head-text{ flex:1; }
+  .drawer-cat{ font-size:10.5px; font-weight:750; letter-spacing:.05em; margin-bottom:3px; }
+  .drawer-title{ font-size:16px; font-weight:700; color:var(--ink); }
+  .drawer-close{
+    border:none; background:none; cursor:pointer; color:var(--gray-500);
+    width:26px;height:26px; display:flex; align-items:center; justify-content:center;
+    border-radius:7px; flex:0 0 auto;
+  }
+  .drawer-close:hover{ background:var(--gray-100); }
+
+  .drawer-body{ padding:20px; overflow-y:auto; flex:1; }
+  .drawer-desc{ font-size:13px; color:var(--gray-500); line-height:1.55; margin-bottom:20px; }
+
+  .locked-note{
+    display:flex; gap:10px; align-items:flex-start;
+    background:var(--gray-100); border-radius:11px; padding:14px 15px;
+    font-size:12.5px; color:var(--gray-700); line-height:1.5;
+  }
+  .locked-note svg{ flex:0 0 auto; width:15px;height:15px; margin-top:1px; color:var(--gray-500); }
+
+  .field{ margin-bottom:18px; }
+  .field > label{ display:block; font-size:12px; font-weight:650; color:var(--gray-700); margin-bottom:6px; }
+  .field .hint{ font-size:11.5px; color:var(--gray-500); margin-top:6px; line-height:1.4; }
+  .field input[type=text], .field input[type=number], .field select, .field textarea{
+    width:100%; border:1px solid var(--gray-300); border-radius:9px;
+    padding:9px 11px; font-size:13px; color:var(--ink); font-family:inherit;
+    background:var(--white);
+  }
+  .field textarea{ resize:vertical; min-height:56px; }
+  .field input:focus, .field select:focus, .field textarea:focus{
+    outline:none; border-color:var(--brand); box-shadow:0 0 0 3px rgba(110,76,245,.14);
+  }
+  .qrow{ display:flex; gap:8px; margin-bottom:10px; align-items:center; }
+  .qrow input[type=text]{ flex:1; }
+  .qrow .qn{ font-size:12px; color:var(--gray-500); flex:0 0 16px; }
+  .qreq{ font-size:10px; font-weight:700; color:var(--green); background:var(--green-bg); padding:3px 8px; border-radius:999px; flex:0 0 auto; white-space:nowrap; }
+  .qreq.optional{ color:var(--gray-500); background:var(--gray-100); }
+  .qremove{ border:none; background:none; color:var(--gray-400); cursor:pointer; width:22px; height:22px; display:flex; align-items:center; justify-content:center; border-radius:6px; flex:0 0 auto; }
+  .qremove svg{ width:11px; height:11px; }
+  .qremove:hover{ background:var(--gray-100); color:var(--red); }
+  .add-q-btn{
+    background:none; border:1px dashed var(--gray-300); color:var(--brand);
+    font-size:12.5px; font-weight:650; padding:8px 12px; border-radius:9px; cursor:pointer;
+    display:inline-flex; align-items:center; gap:6px; margin-top:2px;
+  }
+  .add-q-btn:hover{ background:rgba(110,76,245,.06); }
+  .add-q-btn:disabled{ opacity:.4; cursor:default; }
+
+  .radio-opt{ display:flex; flex-direction:column; gap:9px; }
+  label.radio-card{
+    display:flex; gap:10px; align-items:flex-start;
+    border:1px solid var(--gray-200); border-radius:11px; padding:11px 12px; cursor:pointer;
+  }
+  .radio-card.sel{ border-color:var(--brand); background:rgba(110,76,245,.05); }
+  .radio-card input[type=radio]{ margin-top:3px; accent-color:var(--brand); width:15px; height:15px; flex:0 0 auto; }
+  .ro-title{ font-size:13px; font-weight:650; color:var(--ink); }
+  .ro-sub{ font-size:11.5px; color:var(--gray-500); margin-top:2px; line-height:1.42; }
+
+  .info-affordance{ display:inline-block; width:14px; height:14px; vertical-align:-2px; color:var(--gray-400,#B7BBC6); cursor:help; }
+  .info-affordance svg{ width:14px; height:14px; display:block; }
+
+  .toggle-row{ display:flex; align-items:center; justify-content:space-between; padding:11px 0; border-top:1px solid var(--gray-200); }
+  .toggle-row:first-child{ border-top:none; }
+  .toggle-row .tlabel{ font-size:13px; color:var(--ink); font-weight:550; }
+  .toggle-row .tsub{ font-size:11.5px; color:var(--gray-500); margin-top:2px; }
+  .switch{ position:relative; width:36px; height:21px; flex:0 0 auto; }
+  .switch input{ opacity:0; width:0; height:0; }
+  .slider{
+    position:absolute; inset:0; background:var(--gray-300); border-radius:999px; cursor:pointer;
+    transition:background .15s;
+  }
+  .slider::before{
+    content:""; position:absolute; width:15px; height:15px; left:3px; top:3px;
+    background:#fff; border-radius:50%; transition:transform .15s;
+    box-shadow:0 1px 2px rgba(0,0,0,.25);
+  }
+  .switch input:checked + .slider{ background:var(--brand); }
+  .switch input:checked + .slider::before{ transform:translateX(15px); }
+
+  .chip-row{ display:flex; gap:8px; flex-wrap:wrap; }
+  .chip{
+    border:1px solid var(--gray-300); border-radius:999px; padding:6px 13px;
+    font-size:12.5px; font-weight:600; color:var(--gray-700); cursor:pointer; background:#fff;
+  }
+  .chip.on{ background:var(--brand); border-color:var(--brand); color:#fff; }
+
+  .drawer-footer{
+    border-top:1px solid var(--gray-200); padding:14px 20px; display:flex; justify-content:space-between; align-items:center;
+  }
+  .link-btn{ background:none; border:none; color:var(--gray-500); font-size:12.5px; font-weight:600; cursor:pointer; padding:4px 0; }
+  .link-btn:hover{ color:var(--red); }
+  .link-btn.revert:hover{ color:var(--brand); }
+
+  /* ---------- toast ---------- */
+  #toast{
+    position:fixed; bottom:26px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--ink); color:#fff; padding:11px 18px; border-radius:10px;
+    font-size:13px; font-weight:550; display:flex; align-items:center; gap:9px;
+    opacity:0; pointer-events:none; transition:all .25s ease; z-index:30;
+    box-shadow:0 10px 30px rgba(0,0,0,.25);
+  }
+  #toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  #toast svg{ width:15px;height:15px; color:#6EE7B7; }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- left rail -->
+  <div class="rail">
+    <div class="rail-logo">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="4" fill="#fff"/></svg>
+    </div>
+    <div class="rail-icons">
+      <div class="ri"><svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+      <div class="ri active"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+      <div class="ri"><svg viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8.4 8.4 0 01-8.9 8.4c-1.2 0-2.3-.2-3.4-.7L3 21l1.9-5.2A8.4 8.4 0 1121 11.5z" stroke="currentColor" stroke-width="1.8"/></svg></div>
+      <div class="ri"><svg viewBox="0 0 24 24" fill="none"><path d="M4 19V5a2 2 0 012-2h9l5 5v11a2 2 0 01-2 2H6a2 2 0 01-2-2z" stroke="currentColor" stroke-width="1.8"/><path d="M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+      <div class="ri"><svg viewBox="0 0 24 24" fill="none"><path d="M4 20V10M12 20V4M20 20v-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+      <div class="ri"><svg viewBox="0 0 24 24" fill="none"><path d="M2 9l10-5 10 5-10 5-10-5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M6 12v4c0 1.5 2.7 3 6 3s6-1.5 6-3v-4" stroke="currentColor" stroke-width="1.8"/></svg></div>
+      <div class="ri"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l2.6 5.6L21 9.3l-4.5 4.2 1.1 6.2L12 16.8 6.4 19.7l1.1-6.2L3 9.3l6.4-.7L12 3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></div>
+      <div class="ri"><svg viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4.5 8-11V5l-8-3-8 3v6c0 6.5 8 11 8 11z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></div>
+    </div>
+    <div class="rail-bottom">
+      <div class="ri"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M9.5 9.2a2.5 2.5 0 114.2 1.9c-.9.7-1.7 1.2-1.7 2.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="16.6" r=".9" fill="currentColor"/></svg></div>
+      <div class="ri"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M19.4 13.5a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.9 2.9l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.6V20a2 2 0 01-4 0v-.2a1.7 1.7 0 00-1.1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.9-2.9l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.6-1H4a2 2 0 010-4h.2a1.7 1.7 0 001.6-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.9-2.9l.1.1a1.7 1.7 0 001.9.3H10a1.7 1.7 0 001-1.6V4a2 2 0 014 0v.2a1.7 1.7 0 001 1.6 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.9 2.9l-.1.1a1.7 1.7 0 00-.3 1.9V10a1.7 1.7 0 001.6 1H20a2 2 0 010 4h-.2a1.7 1.7 0 00-1.6 1z" stroke="currentColor" stroke-width="1.4"/></svg></div>
+      <div class="rail-avatar">B</div>
+    </div>
+  </div>
+
+  <!-- main -->
+  <div class="main">
+    <div class="topbar">
+      <span class="crumb">Workflows /</span>
+      <span class="crumb-title">Screen candidate progression</span>
+      <span class="status-pill"><span class="status-dot"></span>Draft</span>
+      <div class="topbar-spacer"></div>
+      <button class="btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 19V10M10 19V5M16 19v-7M22 19H2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Metrics</button>
+      <button class="btn btn-primary" id="saveBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Save</button>
+    </div>
+
+    <div class="canvas-wrap" id="canvasWrap">
+      <div class="canvas" id="canvas">
+        <svg id="lines"></svg>
+        <div id="flow"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <div class="node-icon" id="drawerIcon"></div>
+    <div class="drawer-head-text">
+      <div class="drawer-cat" id="drawerCat"></div>
+      <div class="drawer-title" id="drawerTitle"></div>
+    </div>
+    <button class="drawer-close" id="drawerClose">
+      <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+  <div class="drawer-footer" id="drawerFooter">
+    <button class="link-btn" id="removeStep">Remove step</button>
+    <button class="link-btn revert" id="revertStep">Revert step</button>
+  </div>
+</div>
+
+<div id="toast"><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="toastText">Workflow saved</span></div>
+
+<script>
+/* ---------------- icon paths ---------------- */
+const ICONS = {
+  bolt: '<path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" stroke-linejoin="round"/>',
+  check: '<path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/>',
+  play: '<path d="M7 4l13 8-13 8V4z" stroke-linejoin="round"/>',
+  mail: '<path d="M3 6h18v12H3z"/><path d="M3 7l9 6 9-6" stroke-linecap="round" stroke-linejoin="round"/>',
+  refresh: '<path d="M20 12a8 8 0 10-3 6.3" stroke-linecap="round"/><path d="M21 6v6h-6" stroke-linecap="round" stroke-linejoin="round"/>',
+  bell: '<path d="M6 9a6 6 0 1112 0c0 5 2 6 2 6H4s2-1 2-6z" stroke-linejoin="round"/><path d="M10.5 20a1.7 1.7 0 003 0"/>',
+  flag: '<path d="M5 3v18" stroke-linecap="round"/><path d="M5 4h13l-3 4 3 4H5" stroke-linejoin="round"/>',
+  mic: '<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v4" stroke-linecap="round"/>',
+  shield: '<path d="M12 3l7 3v6c0 5-3.5 7.5-7 9-3.5-1.5-7-4-7-9V6l7-3z" stroke-linejoin="round"/>',
+  cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4" stroke-linecap="round"/>',
+  lock: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3" stroke-linecap="round"/>',
+  dots: '<circle cx="12" cy="5" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.6" fill="currentColor" stroke="none"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01" stroke-linecap="round"/>',
+  close: '<path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/>'
+};
+function svgIcon(name, sw){
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw||1.9}">${ICONS[name]}</svg>`;
+}
+
+/* ---------------- node + edge data ---------------- */
+const N = {
+  trigger:{cat:'TRIGGER', color:'amber', icon:'bolt', title:'Candidate invited to Screen', desc:'Starts when a Screen interview invite is sent.', locked:true},
+  qual:{cat:'QUALIFICATION', color:'green', icon:'check', title:'Qualifying questions', desc:'Candidates answer a short set of yes/no questions before the interview starts.', type:'qual'},
+
+  contInterview:{cat:'ACTION', color:'green', icon:'check', title:'Continue to interview', desc:'Candidate is sent their Screen interview invite and proceeds straight to the interview.', type:'info'},
+  sendRejection:{cat:'ACTION', color:'slate', icon:'mail', title:'Send rejection message', desc:'Configurable candidate messaging, sent by email or SMS.', type:'message'},
+  notifyStakeFail:{cat:'ACTION', color:'amber', icon:'bell', title:'Notify stakeholders', desc:'Recruiter and hiring manager are alerted. Recipients are configurable, independent of ATS-listed owners.', type:'notify'},
+  updateAtsNQ:{cat:'ACTION', color:'indigo', icon:'refresh', title:'Update ATS: Not qualified', desc:'Writes the qualification outcome back to the ATS.', type:'ats', mapping:'Not Qualified'},
+
+  interviewRuns:{cat:'INTERVIEW', color:'indigo', icon:'mic', title:'Screen interview runs', desc:'AI-led structured interview.', locked:true},
+  updateAtsCompleted:{cat:'ACTION', color:'indigo', icon:'refresh', title:'Update ATS: Interview completed', desc:'Syncs interview completion status to the ATS.', type:'ats', mapping:'Screen Interview Completed'},
+  notify1:{cat:'ACTION', color:'amber', icon:'bell', title:'Send notifications', desc:'Internal alert to the hiring team, plus a candidate confirmation email.', type:'notify'},
+
+  evaluation:{cat:'EVALUATION', color:'indigo', icon:'shield', title:'Evaluation + integrity', desc:'Structured scoring plus fraud and risk signals.', type:'eval', locked:false},
+
+  advance:{cat:'ACTION', color:'green', icon:'check', title:'Advance candidate', desc:'Score cleared the threshold and risk is within range — candidate moves to the next stage.', type:'info'},
+  updateAtsAdv:{cat:'ACTION', color:'indigo', icon:'refresh', title:'Update ATS: Advanced', desc:'Syncs advancement to the ATS.', type:'ats', mapping:'Advanced'},
+  notify2:{cat:'ACTION', color:'amber', icon:'bell', title:'Send notifications', desc:'Internal alert, plus a candidate confirmation email.', type:'notify'},
+
+  exceptionQ:{cat:'ACTION', color:'amber', icon:'flag', title:'Add to exception queue', desc:'Surfaces the candidate for manual recruiter review.', type:'assign'},
+  updateAtsReview:{cat:'ACTION', color:'indigo', icon:'refresh', title:'Update ATS: Needs review', desc:'Flags the candidate’s ATS record for review.', type:'ats', mapping:'Needs Review'},
+  notifyRecruiter:{cat:'ACTION', color:'amber', icon:'bell', title:'Notify recruiter', desc:'Email alert today; Slack alerts are planned for a later phase.', type:'notify'},
+
+  invite2:{cat:'ACTION', color:'indigo', icon:'cal', title:'Invite to schedule next round', desc:'Recruiter- or hiring-manager-provided calendar link, shared with the candidate by email.', type:'schedule', info:'Lightest-weight approach for V1 — no native scheduling. Detecting an actual booked time depends on how cleanly the link back-populates the ATS.'},
+
+  updateAtsSched:{cat:'ACTION', color:'indigo', icon:'refresh', title:'Update ATS: Round scheduled', desc:'Live round confirmed and synced to the ATS.', type:'ats', mapping:'Scheduling Completed — Live Round Scheduled'},
+  notify3:{cat:'ACTION', color:'amber', icon:'bell', title:'Send notifications', desc:'Internal alert, plus a candidate confirmation email.', type:'notify'},
+
+  updateAtsLinkSent:{cat:'ACTION', color:'slate', icon:'refresh', title:'Update ATS: Scheduling link sent', desc:'Fallback terminal state for V1 — we can’t always confirm a booking, so this records that the link went out.', type:'ats', mapping:'Scheduling Request — Not Completed'},
+};
+
+/* structure: sequence of blocks. type: node | fork | end */
+const FLOW = [
+  {type:'node', id:'trigger'},
+  {type:'node', id:'qual'},
+  {type:'fork', pills:[
+    {label:'PASS', color:'green', chain:['contInterview']},
+    {label:'FAIL', color:'red', chain:['sendRejection','notifyStakeFail','updateAtsNQ'], end:true}
+  ]},
+  {type:'node', id:'interviewRuns'},
+  {type:'node', id:'updateAtsCompleted'},
+  {type:'node', id:'notify1'},
+  {type:'node', id:'evaluation'},
+  {type:'fork', pills:[
+    {label:'ADVANCE', color:'green', chain:['advance','updateAtsAdv','notify2']},
+    {label:'NEEDS REVIEW', color:'amber', chain:['exceptionQ','updateAtsReview','notifyRecruiter'], end:true}
+  ]},
+  {type:'node', id:'invite2'},
+  {type:'fork', pills:[
+    {label:'SCHEDULED', color:'green', chain:['updateAtsSched','notify3'], end:true},
+    {label:'NOT SCHEDULED', color:'amber', chain:['updateAtsLinkSent'], end:true}
+  ]},
+];
+
+/* ---------------- render ---------------- */
+const flowEl = document.getElementById('flow');
+const edges = []; // {from, to} element ids for line drawing
+
+function nodeHTML(id, small){
+  const n = N[id];
+  const affordance = n.locked
+    ? `<span class="node-affordance">${svgIcon('lock',1.9)}</span>`
+    : `<span class="node-affordance">${svgIcon('dots',2.2)}</span>`;
+  return `
+  <div class="node c-${n.color}" id="node-${id}" data-id="${id}">
+    <div class="node-icon">${svgIcon(n.icon)}</div>
+    <div class="node-body">
+      <div class="node-top">
+        <div class="node-cat">${n.cat}</div>
+        ${affordance}
+      </div>
+      <div class="node-title">${n.title}</div>
+      <div class="node-desc">${n.desc}</div>
+    </div>
+  </div>`;
+}
+
+let html = '';
+let prevId = null; // id of last rendered top-level element for edge purposes
+
+FLOW.forEach((block, i) => {
+  if (block.type === 'node') {
+    if (prevId) { html += `<div class="stem"></div>`; edges.push({from:prevId, to:'node-'+block.id}); }
+    html += `<div class="col-single">${nodeHTML(block.id)}</div>`;
+    prevId = 'node-'+block.id;
+  }
+  if (block.type === 'fork') {
+    html += `<div class="stem"></div>`;
+    html += `<div class="fork">`;
+    block.pills.forEach((branch, bi) => {
+      const pillId = `pill-${i}-${bi}`;
+      html += `<div class="branch">`;
+      html += `<div class="pill ${branch.color}" id="${pillId}">${branch.label}</div>`;
+      edges.push({from: prevId, to: pillId});
+      let localPrev = pillId;
+      branch.chain.forEach((nid, ci) => {
+        if (ci > 0) html += `<div class="stem"></div>`;
+        html += nodeHTML(nid);
+        edges.push({from: localPrev, to: 'node-'+nid});
+        localPrev = 'node-'+nid;
+      });
+      if (branch.end) {
+        const endId = `end-${i}-${bi}`;
+        html += `<div class="end-marker" id="${endId}"><span class="box"></span>Ends here</div>`;
+        edges.push({from: localPrev, to: endId});
+      } else {
+        // remember the surviving branch's tail as the new prevId after the fork
+        block._continueFrom = localPrev;
+      }
+      html += `</div>`; // .branch
+    });
+    html += `</div>`; // .fork
+    prevId = block._continueFrom || prevId;
+  }
+});
+
+flowEl.innerHTML = html;
+
+/* ---------------- draw connector lines ---------------- */
+const svg = document.getElementById('lines');
+const canvas = document.getElementById('canvas');
+
+function elCenter(el, rect){
+  const r = el.getBoundingClientRect();
+  return { top: r.top - rect.top, bottom: r.bottom - rect.top, cx: r.left - rect.left + r.width/2 };
+}
+
+function drawLines(){
+  const rect = canvas.getBoundingClientRect();
+  canvas.style.height = flowEl.scrollHeight + 60 + 'px';
+  svg.setAttribute('width', rect.width);
+  svg.setAttribute('height', flowEl.scrollHeight + 60);
+  svg.style.width = rect.width + 'px';
+  svg.style.height = (flowEl.scrollHeight + 60) + 'px';
+
+  let paths = '';
+  edges.forEach(e => {
+    const fromEl = document.getElementById(e.from);
+    const toEl = document.getElementById(e.to);
+    if (!fromEl || !toEl) return;
+    const a = elCenter(fromEl, rect);
+    const b = elCenter(toEl, rect);
+    const y1 = a.bottom, y2 = b.top, x1 = a.cx, x2 = b.cx;
+    const midY = y1 + (y2 - y1) / 2;
+    const d = `M ${x1} ${y1} L ${x1} ${midY} L ${x2} ${midY} L ${x2} ${y2}`;
+    paths += `<path d="${d}" fill="none" stroke="#D9DCE5" stroke-width="2"/>`;
+  });
+  svg.innerHTML = paths;
+}
+
+window.addEventListener('resize', drawLines);
+requestAnimationFrame(() => requestAnimationFrame(drawLines));
+
+/* ---------------- drawer logic ---------------- */
+const drawer = document.getElementById('drawer');
+const scrim = document.getElementById('scrim');
+const drawerIcon = document.getElementById('drawerIcon');
+const drawerCat = document.getElementById('drawerCat');
+const drawerTitle = document.getElementById('drawerTitle');
+const drawerBody = document.getElementById('drawerBody');
+const drawerFooter = document.getElementById('drawerFooter');
+
+function openDrawer(id){
+  const n = N[id];
+  document.querySelectorAll('.node.selected').forEach(x=>x.classList.remove('selected'));
+  document.getElementById('node-'+id).classList.add('selected');
+
+  drawerIcon.className = 'node-icon';
+  drawerIcon.innerHTML = svgIcon(n.icon);
+  drawerIcon.style.background = getComputedStyle(document.querySelector('.c-'+n.color+' .node-icon')).background;
+  drawerCat.textContent = n.cat;
+  drawerCat.style.color = getComputedStyle(document.querySelector('.c-'+n.color+' .node-cat')).color;
+  drawerTitle.textContent = n.title;
+
+  let body = `<div class="drawer-desc">${n.desc}${n.info ? ' <span class="info-affordance" title="'+n.info.replace(/"/g,'&quot;')+'">'+svgIconInline('info')+'</span>' : ''}</div>`;
+
+  if (n.locked) {
+    body += `<div class="locked-note">${svgIcon('lock',1.9)}<span>This is a fixed system step. It runs automatically and can’t be reconfigured in the workflow builder.</span></div>`;
+    drawerFooter.style.display = 'none';
+  } else {
+    drawerFooter.style.display = 'flex';
+    if (n.type === 'qual') {
+      body += fieldQual();
+    } else if (n.type === 'message') {
+      body += fieldMessage(n);
+    } else if (n.type === 'schedule') {
+      body += fieldSchedule(n);
+    } else if (n.type === 'notify') {
+      body += fieldNotify(n);
+    } else if (n.type === 'ats') {
+      body += fieldAts(n);
+    } else if (n.type === 'assign') {
+      body += fieldAssign();
+    } else if (n.type === 'eval') {
+      body += fieldEval();
+    } else if (n.type === 'info') {
+      body += `<div class="locked-note">${svgIcon('info',1.9)}<span>No additional configuration — this step just moves the candidate to the next stage.</span></div>`;
+      drawerFooter.style.display = 'none';
+    }
+  }
+  drawerBody.innerHTML = body;
+  if (n.type === 'qual') initQualField();
+  if (n.type === 'schedule') initScheduleField();
+
+  scrim.classList.add('show');
+  drawer.classList.add('open');
+}
+
+function svgIconInline(name){ return svgIcon(name, 1.8); }
+
+function closeDrawer(){
+  scrim.classList.remove('show');
+  drawer.classList.remove('open');
+  document.querySelectorAll('.node.selected').forEach(x=>x.classList.remove('selected'));
+}
+
+function fieldQual(){
+  return `
+    <div class="field">
+      <label>Question source</label>
+      <div class="radio-opt" id="qsourceGroup">
+        <label class="radio-card">
+          <input type="radio" name="qsource" value="ai">
+          <div>
+            <div class="ro-title">Use the AI Interviewer's qualifying questions</div>
+            <div class="ro-sub">The same question set configured on Screen's AI Interviewer. Will also work for Inbound once that's ready.</div>
+          </div>
+        </label>
+        <label class="radio-card">
+          <input type="radio" name="qsource" value="template">
+          <div>
+            <div class="ro-title">Use a template</div>
+            <div class="ro-sub">Start from a saved question set.</div>
+          </div>
+        </label>
+        <label class="radio-card">
+          <input type="radio" name="qsource" value="custom" checked>
+          <div>
+            <div class="ro-title">Define here</div>
+            <div class="ro-sub">Write questions specific to this workflow.</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <div class="field" id="qsourceTemplateBox" style="display:none;">
+      <label>Template</label>
+      <select>
+        <option>SDR — high-volume screen</option>
+        <option>Engineering — standard</option>
+        <option>Custom template…</option>
+      </select>
+    </div>
+
+    <div id="qsourceCustomBox">
+      <div class="field">
+        <label>Screening questions</label>
+        <div id="qList">
+          <div class="qrow"><span class="qn">1</span><input type="text" value="Are you legally authorized to work in this country?"><span class="qreq">Required</span></div>
+          <div class="qrow"><span class="qn">2</span><input type="text" value="Are you willing to relocate if required?"><span class="qreq">Required</span></div>
+          <div class="qrow"><span class="qn">3</span><input type="text" value="Do you have 3+ years of relevant experience?"><span class="qreq">Required</span></div>
+        </div>
+        <button class="add-q-btn" id="addQBtn" type="button">+ Add optional question</button>
+        <div class="hint">Up to 3 additional optional questions.</div>
+      </div>
+      <div class="toggle-row">
+        <div><div class="tlabel">Fail on any "No"</div><div class="tsub">A single disqualifying answer on a required question routes to Fail</div></div>
+        <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+      </div>
+    </div>`;
+}
+
+function initQualField(){
+  const group = document.getElementById('qsourceGroup');
+  const templateBox = document.getElementById('qsourceTemplateBox');
+  const customBox = document.getElementById('qsourceCustomBox');
+
+  function syncVisibility(){
+    const val = group.querySelector('input:checked').value;
+    templateBox.style.display = val === 'template' ? 'block' : 'none';
+    customBox.style.display = val === 'custom' ? 'block' : 'none';
+    group.querySelectorAll('.radio-card').forEach(card => {
+      card.classList.toggle('sel', card.querySelector('input').checked);
+    });
+  }
+  group.querySelectorAll('input[name=qsource]').forEach(r => r.addEventListener('change', syncVisibility));
+  syncVisibility();
+
+  const qList = document.getElementById('qList');
+  const addBtn = document.getElementById('addQBtn');
+  const MAX_OPTIONAL = 3;
+  let optionalCount = 0;
+
+  function renumber(){
+    qList.querySelectorAll('.qn').forEach((el, i) => { el.textContent = i + 1; });
+  }
+  function syncAddBtn(){
+    addBtn.disabled = optionalCount >= MAX_OPTIONAL;
+    addBtn.textContent = optionalCount >= MAX_OPTIONAL ? 'Optional question limit reached' : '+ Add optional question';
+  }
+  addBtn.addEventListener('click', () => {
+    if (optionalCount >= MAX_OPTIONAL) return;
+    optionalCount++;
+    const row = document.createElement('div');
+    row.className = 'qrow';
+    row.innerHTML = `<span class="qn"></span><input type="text" placeholder="Add a question…"><span class="qreq optional">Optional</span><button class="qremove" type="button">${svgIconInline('close')}</button>`;
+    qList.appendChild(row);
+    row.querySelector('.qremove').addEventListener('click', () => {
+      row.remove(); optionalCount--; renumber(); syncAddBtn();
+    });
+    renumber(); syncAddBtn();
+  });
+  renumber(); syncAddBtn();
+}
+
+function initScheduleField(){
+  const linkInput = document.getElementById('calLinkInput');
+  const preview = document.getElementById('calPreview');
+  if (!linkInput || !preview) return;
+  linkInput.addEventListener('input', () => {
+    const url = linkInput.value.trim() || 'https://calendly.com/your-team/screen-followup';
+    preview.value = `Hi {{candidate_first_name}}, nice work completing your Screen interview! Pick a time that works for you here: ${url}`;
+  });
+}
+function fieldMessage(n){
+  return `
+    <div class="field"><label>Channel</label>
+      <div class="chip-row">
+        <div class="chip on">Email</div><div class="chip">SMS</div><div class="chip">WhatsApp</div>
+      </div>
+    </div>
+    <div class="field"><label>Message template</label>
+      <select><option>${n.title.includes('reject')?'Not selected — standard':'Screen interview invite — standard'}</option><option>Custom template…</option></select>
+    </div>
+    <div class="field"><label>Preview</label>
+      <textarea readonly>Hi {{candidate_first_name}}, thanks for taking the time to complete your screening. ${n.title.toLowerCase().includes('reject')?"We won't be moving forward at this time.":"You're invited to the next step — click below to get started."}</textarea>
+    </div>`;
+}
+function fieldSchedule(n){
+  return `
+    <div class="field"><label>Calendar link</label>
+      <input type="text" id="calLinkInput" placeholder="https://calendly.com/your-team/screen-followup" value="https://calendly.com/acme-recruiting/next-round">
+      <div class="hint">Paste the recruiter's or hiring manager's scheduling link (e.g. Calendly). It's inserted into the candidate message below.</div>
+    </div>
+    <div class="field"><label>Channel</label>
+      <div class="chip-row">
+        <div class="chip on">Email</div><div class="chip">SMS</div><div class="chip">WhatsApp</div>
+      </div>
+    </div>
+    <div class="field"><label>Message template</label>
+      <select><option>Scheduling invite — standard</option><option>Custom template…</option></select>
+    </div>
+    <div class="field"><label>Preview</label>
+      <textarea readonly id="calPreview">Hi {{candidate_first_name}}, nice work completing your Screen interview! Pick a time that works for you here: https://calendly.com/acme-recruiting/next-round</textarea>
+    </div>`;
+}
+function fieldNotify(n){
+  return `
+    <div class="field"><label>Recipients</label>
+      <input type="text" value="recruiter@brighthire.com, hiring-manager@company.com">
+      <div class="hint">Entered manually — not pulled from the ATS record.</div>
+    </div>
+    <div class="field"><label>Delivery</label>
+      <div class="chip-row"><div class="chip on">Email</div><div class="chip">Slack (future)</div><div class="chip">Teams (future)</div></div>
+    </div>
+    <div class="toggle-row">
+      <div><div class="tlabel">Also notify candidate</div><div class="tsub">Send a parallel confirmation email</div></div>
+      <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+    </div>`;
+}
+function fieldAts(n){
+  return `
+    <div class="field"><label>ATS status mapping</label>
+      <select><option>${n.mapping}</option><option>Custom mapping…</option></select>
+      <div class="hint">Maps this internal state to a stage/status in the connected ATS.</div>
+    </div>
+    <div class="toggle-row">
+      <div><div class="tlabel">Required</div><div class="tsub">Can’t be turned off in V1</div></div>
+      <label class="switch"><input type="checkbox" checked disabled><span class="slider"></span></label>
+    </div>`;
+}
+function fieldAssign(){
+  return `
+    <div class="field"><label>Assign to</label>
+      <select><option>Candidate's recruiter</option><option>Specific person…</option><option>Round robin</option></select>
+    </div>
+    <div class="field"><label>Priority</label>
+      <div class="chip-row"><div class="chip">Low</div><div class="chip on">Normal</div><div class="chip">High</div></div>
+    </div>`;
+}
+function fieldEval(){
+  return `
+    <div class="field"><label>Advance if screen score is above</label>
+      <input type="number" value="80"> <div class="hint">0–100 scale, matches today's evaluation scoring.</div>
+    </div>
+    <div class="field"><label>And risk score is below</label>
+      <select><option>Medium</option><option selected>Low</option></select>
+      <div class="hint">Numeric risk score planned; Low / Medium / High for V1.</div>
+    </div>`;
+}
+
+document.getElementById('drawerClose').onclick = closeDrawer;
+scrim.onclick = closeDrawer;
+document.getElementById('removeStep').onclick = () => { showToast('Step removed', true); closeDrawer(); };
+document.getElementById('revertStep').onclick = () => { showToast('Step reverted to default'); };
+
+document.addEventListener('click', (e) => {
+  const card = e.target.closest('.node');
+  if (card) openDrawer(card.dataset.id);
+});
+
+/* ---------------- toast ---------------- */
+let toastTimer;
+function showToast(msg, warn){
+  const t = document.getElementById('toast');
+  document.getElementById('toastText').textContent = msg || 'Workflow saved';
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2400);
+}
+document.getElementById('saveBtn').onclick = () => showToast('Workflow saved');
+
+/* redraw lines after fonts/layout settle */
+window.addEventListener('load', drawLines);
+document.getElementById('canvasWrap').addEventListener('scroll', ()=>{}, {passive:true});
+</script>
+</body>
+</html>
